@@ -817,13 +817,13 @@ footer.fixed-footer {
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-top: 1px solid var(--border);
-  padding: 10px 16px;
+  padding: 8px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 4px;
+  gap: 2px;
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5);
   box-sizing: border-box;
   width: 100%;
@@ -1042,6 +1042,13 @@ footer.fixed-footer {
 .footer-link:hover {
   color: #ff6b8b;
 }
+.footer-sub {
+  color: var(--text-faint);
+  font-size: 11px;
+  font-family: var(--mono);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
 </style>
 </head>
 <body>
@@ -1102,6 +1109,9 @@ footer.fixed-footer {
 <footer class="fixed-footer">
   <div class="footer-credit">
     Made with &#128151;, by <a href="https://www.instagram.com/vishvjeetdahiyaa" target="_blank" rel="noopener" class="footer-link">Vishvjeet Dahiya</a>
+  </div>
+  <div class="footer-sub">
+    Open source &bull; Zero data collected &bull; Free forever
   </div>
 </footer>
 

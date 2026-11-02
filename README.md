@@ -12,6 +12,8 @@
 Fast attendance, bunk projections, and session records without the Samarth lag.
 
 [![Live Site](https://img.shields.io/badge/Live%20Site-vishvjeetdahiya.github.io%2FDCRUST-7928CA?style=for-the-badge&logo=githubpages&logoColor=white)](https://vishvjeetdahiya.github.io/DCRUST/)
+[![Open Source](https://img.shields.io/badge/Open%20Source-100%25-brightgreen?style=for-the-badge&logo=github)](https://github.com/Vishvjeetdahiya/DCRUST)
+[![Free Forever](https://img.shields.io/badge/Free-Forever-blue?style=for-the-badge)](https://github.com/Vishvjeetdahiya/DCRUST)
 [![Author](https://img.shields.io/badge/By-Vishvjeet%20Dahiya-FF69B4?style=for-the-badge&logo=instagram&logoColor=white)](https://www.instagram.com/vishvjeetdahiyaa)
 
 <br/>
@@ -55,7 +57,7 @@ ZZZzz /,`.-'`'    -.  ;-;;,_
 
 ---
 
-## Privacy
+## Privacy & Open Source
 
 ```text
    /\_/\  
@@ -63,9 +65,10 @@ ZZZzz /,`.-'`'    -.  ;-;;,_
   (")_(")
 ```
 
-- Credentials are saved only inside your local browser storage for autofill convenience, never to any external database.
+- **100% Open Source**: Fully transparent, public code on GitHub. Anyone can inspect, verify, or self-host it.
+- **Zero Data Sent to Servers**: No attendance data, logs, or passwords are ever stored on or transmitted to external servers. Credentials stay purely in your own browser local storage for autofill.
+- **Always Free**: No ads, no tracking cookies, and no paywalls. Free for everyone, forever.
 - Clear button wipes your saved credentials and active attendance view instantly.
-- No tracking or third-party cookies.
 
 ---
 
