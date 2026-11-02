@@ -12,8 +12,6 @@
 Fast attendance, bunk projections, and session records without the Samarth lag.
 
 [![Live Site](https://img.shields.io/badge/Live%20Site-vishvjeetdahiya.github.io%2FDCRUST-7928CA?style=for-the-badge&logo=githubpages&logoColor=white)](https://vishvjeetdahiya.github.io/DCRUST/)
-[![Backend](https://img.shields.io/badge/Edge-Cloudflare%20Workers-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
-[![Speed](https://img.shields.io/badge/Cached%20Speed-%7E1ms-brightgreen?style=for-the-badge&logo=speedtest&logoColor=white)](https://vishvjeetdahiya.github.io/DCRUST/)
 [![Author](https://img.shields.io/badge/By-Vishvjeet%20Dahiya-FF69B4?style=for-the-badge&logo=instagram&logoColor=white)](https://www.instagram.com/vishvjeetdahiyaa)
 
 <br/>
@@ -50,7 +48,6 @@ ZZZzz /,`.-'`'    -.  ;-;;,_
 | **Bunk & Attendance Calculator** | Real-time safe bunks if above 75%, or classes needed to recover if below 75%. |
 | **Remember on this Device** | Check once and your snapshot loads instantly next time without requiring a password. |
 | **Session History** | Click any course to view all sessions with date, time, and Present / Absent / Leave tags. |
-| **Fast Edge Caching** | Cached responses return in ~1ms without waiting on portal loading times. |
 | **Anti-Abuse Protections** | Lockout after 3 failed attempts (2-minute cooldown), rate limiting, and origin guards. |
 | **Dark Theme** | Clean responsive dark interface built for mobile and desktop screens. |
 | **Forgot Password** | Direct button to the official Samarth password reset page. |
