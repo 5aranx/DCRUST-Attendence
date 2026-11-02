@@ -1,59 +1,118 @@
+const ALLOWED_ORIGINS = new Set([
+  'https://vishvjeetdahiya.github.io',
+  'http://localhost:8000',
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:8000',
+  'http://127.0.0.1:5500',
+]);
+
 function getCorsHeaders(req) {
   const o = req ? (req.headers.get('Origin') || '') : '';
-  let a = '*';
-  if (o) {
-    try {
-      const u = new URL(o);
-      if (u.hostname.endsWith('.github.io') || u.hostname === 'localhost' || u.hostname === '127.0.0.1') a = o;
-    } catch (_) {}
-  }
+  const allowed = ALLOWED_ORIGINS.has(o) ? o : null;
   return {
-    'Access-Control-Allow-Origin': a,
+    ...(allowed ? { 'Access-Control-Allow-Origin': allowed } : {}),
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Max-Age': '86400',
+    'Vary': 'Origin',
   };
 }
 
-function json(body, status, req) {
+function json(body, status, req, extraHeaders = {}) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json', ...getCorsHeaders(req) },
+    headers: { 'Content-Type': 'application/json', ...getCorsHeaders(req), ...extraHeaders },
   });
 }
 
 const ipLimits = new Map();
-const failedAttempts = new Map();
+const ipFailedLogins = new Map();
+const userFailedLogins = new Map();
 const cache = new Map();
+
+function getClientIp(req) {
+  return req.headers.get('cf-connecting-ip')
+    || req.headers.get('x-real-ip')
+    || (req.headers.get('x-forwarded-for') ? req.headers.get('x-forwarded-for').split(',')[0].trim() : '')
+    || 'anon';
+}
+
+function checkIpRateLimit(ip) {
+  const now = Date.now();
+  let rec = ipLimits.get(ip);
+  if (!rec || now > rec.resetAt) {
+    rec = { count: 0, resetAt: now + 60000, violations: rec ? rec.violations : 0, blockUntil: 0 };
+  }
+  if (now < rec.blockUntil) {
+    const waitSecs = Math.ceil((rec.blockUntil - now) / 1000);
+    return { allowed: false, waitSecs };
+  }
+  rec.count++;
+  if (rec.count > 6) {
+    rec.violations = (rec.violations || 0) + 1;
+    const blockDuration = rec.violations >= 3 ? 900000 : (rec.violations === 2 ? 300000 : 60000);
+    rec.blockUntil = now + blockDuration;
+    ipLimits.set(ip, rec);
+    return { allowed: false, waitSecs: Math.ceil(blockDuration / 1000) };
+  }
+  ipLimits.set(ip, rec);
+  return { allowed: true };
+}
+
+function checkIpLoginLockout(ip) {
+  const now = Date.now();
+  const rec = ipFailedLogins.get(ip);
+  if (!rec) return { locked: false };
+  if (now < rec.lockedUntil) {
+    return { locked: true, waitSecs: Math.ceil((rec.lockedUntil - now) / 1000) };
+  }
+  if (now >= rec.lockedUntil) {
+    ipFailedLogins.delete(ip);
+  }
+  return { locked: false };
+}
+
+function recordIpLoginFailure(ip) {
+  const now = Date.now();
+  const rec = ipFailedLogins.get(ip) || { count: 0, lockedUntil: 0 };
+  rec.count++;
+  if (rec.count >= 5) {
+    rec.lockedUntil = now + 900000; // 15 mins
+  } else if (rec.count >= 3) {
+    rec.lockedUntil = now + 180000; // 3 mins
+  }
+  ipFailedLogins.set(ip, rec);
+}
+
+function checkUserLockout(username) {
+  const now = Date.now();
+  const rec = userFailedLogins.get(username);
+  if (!rec) return { locked: false };
+  if (now < rec.lockedUntil) {
+    return { locked: true, waitSecs: Math.ceil((rec.lockedUntil - now) / 1000) };
+  }
+  if (now >= rec.lockedUntil) {
+    userFailedLogins.delete(username);
+  }
+  return { locked: false };
+}
+
+function recordUserLoginFailure(username) {
+  const now = Date.now();
+  const rec = userFailedLogins.get(username) || { count: 0, lockedUntil: 0 };
+  rec.count++;
+  if (rec.count >= 5) {
+    rec.lockedUntil = now + 900000; // 15 mins
+  } else if (rec.count >= 3) {
+    rec.lockedUntil = now + 180000; // 3 mins
+  }
+  userFailedLogins.set(username, rec);
+}
 
 async function hashKey(s) {
   const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
   return Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, '0')).join('');
-}
-
-function checkIpLimit(ip) {
-  const now = Date.now(), rec = ipLimits.get(ip) || { count: 0, resetAt: now + 60000 };
-  if (now > rec.resetAt) { rec.count = 0; rec.resetAt = now + 60000; }
-  rec.count++;
-  ipLimits.set(ip, rec);
-  return rec.count <= 10;
-}
-
-function checkLockout(u) {
-  const r = failedAttempts.get(u);
-  if (!r) return { locked: false };
-  if (r.count >= 3 && Date.now() < r.lockedUntil) {
-    return { locked: true, waitSecs: Math.ceil((r.lockedUntil - Date.now()) / 1000) };
-  }
-  if (r.lockedUntil && Date.now() >= r.lockedUntil) failedAttempts.delete(u);
-  return { locked: false };
-}
-
-function recordFail(u) {
-  const r = failedAttempts.get(u) || { count: 0, lockedUntil: 0 };
-  r.count++;
-  if (r.count >= 3) r.lockedUntil = Date.now() + 120000;
-  failedAttempts.set(u, r);
 }
 
 function getCache(k) {
@@ -81,8 +140,6 @@ function mergeSetCookie(jar, headers) {
 function cookieHeader(jar) {
   return [...jar.entries()].map(([k, v]) => `${k}=${v}`).join('; ');
 }
-
-
 
 async function pLimit(concurrency, tasks) {
   const results = new Array(tasks.length);
@@ -120,8 +177,12 @@ const BASE = 'https://dcrustm.samarth.edu.in';
 export default {
   async fetch(request) {
     const url = new URL(request.url);
+    const origin = request.headers.get('Origin');
 
     if (request.method === 'OPTIONS' && url.pathname === '/attendance') {
+      if (!origin || !ALLOWED_ORIGINS.has(origin)) {
+        return new Response(null, { status: 403 });
+      }
       return new Response(null, { status: 204, headers: getCorsHeaders(request) });
     }
 
@@ -129,21 +190,33 @@ export default {
       return json({ error: 'not found' }, 404, request);
     }
 
-    const origin = request.headers.get('Origin');
-    if (origin) {
-      try {
-        const u = new URL(origin);
-        if (!u.hostname.endsWith('.github.io') && u.hostname !== 'localhost' && u.hostname !== '127.0.0.1') {
-          return json({ error: 'Forbidden origin' }, 403, request);
-        }
-      } catch (_) {
-        return json({ error: 'Forbidden origin' }, 403, request);
-      }
+    // Strict origin allowlist check: prevents CSRF, unauthorized scripts, and abuse
+    if (!origin || !ALLOWED_ORIGINS.has(origin)) {
+      return json({ error: 'Access forbidden: unauthorized origin' }, 403, request);
     }
 
-    const clientIp = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'anon';
-    if (!checkIpLimit(clientIp)) {
-      return json({ error: 'Too many requests from this IP. Please wait a minute.' }, 429, request);
+    const clientIp = getClientIp(request);
+
+    // IP-level request rate limit (max 6 requests per 60 seconds)
+    const rateCheck = checkIpRateLimit(clientIp);
+    if (!rateCheck.allowed) {
+      return json(
+        { error: `Too many requests from this network. Please wait ${rateCheck.waitSecs}s.` },
+        429,
+        request,
+        { 'Retry-After': String(rateCheck.waitSecs) }
+      );
+    }
+
+    // IP-level failed login lockout (anti-credential stuffing across accounts)
+    const ipLock = checkIpLoginLockout(clientIp);
+    if (ipLock.locked) {
+      return json(
+        { error: `Too many failed login attempts from this network. Temporarily blocked for ${ipLock.waitSecs}s.` },
+        429,
+        request,
+        { 'Retry-After': String(ipLock.waitSecs) }
+      );
     }
 
     try {
@@ -155,7 +228,7 @@ export default {
       }
 
       const username = (body.username || '').trim();
-      const password = body.password || '';
+      const password = typeof body.password === 'string' ? body.password : '';
       if (!username || !password) {
         return json({ error: 'missing username or password' }, 400, request);
       }
@@ -164,9 +237,18 @@ export default {
         return json({ error: 'Invalid roll number format. Roll number should be 8-16 digits.' }, 400, request);
       }
 
-      const lockout = checkLockout(username);
-      if (lockout.locked) {
-        return json({ error: 'Too many failed login attempts for ' + username + '. Please wait ' + lockout.waitSecs + 's before trying again.' }, 429, request);
+      if (password.length < 4 || password.length > 64) {
+        return json({ error: 'Invalid password format.' }, 400, request);
+      }
+
+      const userLock = checkUserLockout(username);
+      if (userLock.locked) {
+        return json(
+          { error: `Too many failed login attempts for ${username}. Please wait ${userLock.waitSecs}s before trying again.` },
+          429,
+          request,
+          { 'Retry-After': String(userLock.waitSecs) }
+        );
       }
 
       const cacheKey = username + ':' + (await hashKey(password));
@@ -226,13 +308,18 @@ export default {
       const isRedirect = (loginPost.status === 301 || loginPost.status === 302 || loginPost.status === 303) && loc;
 
       if (!isRedirect) {
-        recordFail(username);
-        const rec = failedAttempts.get(username);
-        const left = 3 - (rec ? rec.count : 0);
-        if (left <= 0) {
-          return json({ error: 'Invalid credentials. Account locked for 2 minutes due to 3 failed attempts.' }, 401, request);
+        recordIpLoginFailure(clientIp);
+        recordUserLoginFailure(username);
+
+        // 1.2s tarpit delay to throttle automated brute-force scripts
+        await new Promise((r) => setTimeout(r, 1200));
+
+        const uRec = userFailedLogins.get(username);
+        const left = Math.max(0, 3 - (uRec ? uRec.count : 0));
+        if (left === 0) {
+          return json({ error: 'Invalid credentials. Account temporarily locked for 3 minutes due to 3 failed attempts.' }, 401, request);
         }
-        return json({ error: 'Invalid credentials. (' + left + ' attempt' + (left === 1 ? '' : 's') + ' left before 2-minute lockout)' }, 401, request);
+        return json({ error: `Invalid roll number or password. (${left} attempt${left === 1 ? '' : 's'} left before 3-minute lockout)` }, 401, request);
       }
 
       // Step 3: Fetch attendance index and timetable in parallel
@@ -369,7 +456,8 @@ export default {
       const overallTotal = totalPresent + totalAbsent;
       const overallPct = overallTotal > 0 ? +(totalPresent / overallTotal * 100).toFixed(2) : 0;
 
-      failedAttempts.delete(username);
+      userFailedLogins.delete(username);
+      ipFailedLogins.delete(clientIp);
 
       const responseData = {
         username,

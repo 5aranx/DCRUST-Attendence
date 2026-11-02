@@ -51,7 +51,7 @@ ZZZzz /,`.-'`'    -.  ;-;;,_
 | **Instant Live Fetch** | Direct parallel fetch checks your complete attendance in ~2-3 seconds. |
 | **Credential Autofill** | Saves roll number and password locally in your browser for 1-tap checking. |
 | **Session History** | Click any course to view all sessions with date, time, and Present / Absent / Leave tags. |
-| **Anti-Abuse Protections** | Lockout after 3 failed attempts (2-minute cooldown), rate limiting, and origin guards. |
+| **Anti-Abuse Protections** | Lockout after repeated failed attempts, IP rate-limiting, origin allowlist, and brute-force defenses. |
 | **Dark & Light Themes** | Clean toggleable dark and light themes with instant persistence. |
 | **Forgot Password** | Direct button to the official Samarth password reset page. |
 
@@ -66,7 +66,7 @@ ZZZzz /,`.-'`'    -.  ;-;;,_
 ```
 
 - **100% Open Source**: Fully transparent, public code on GitHub. Anyone can inspect, verify, or self-host it.
-- **Zero Data Sent to Servers**: No attendance data, logs, or passwords are ever stored on or transmitted to external servers. Credentials stay purely in your own browser local storage for autofill.
+- **No Data Stored**: No passwords, roll numbers, or personal attendance records are ever saved or stored on any server or database. Credentials remain strictly on your own device in your browser's local storage for 1-tap autofill, and are only processed in-memory ephemerally to fetch your records directly from the portal.
 - **Always Free**: No ads, no tracking cookies, and no paywalls. Free for everyone, forever.
 - Clear button wipes your saved credentials and active attendance view instantly.
 

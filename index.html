@@ -73,10 +73,8 @@ body {
   line-height: 1.6;
   margin: 0;
   padding: 0;
-  overflow-x: hidden !important;
   width: 100% !important;
   max-width: 100% !important;
-  touch-action: pan-y;
 }
 .wrap {
   width: 100%;
@@ -808,12 +806,12 @@ tr:last-child td {
 }
 
 footer.fixed-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
   width: 100%;
-  z-index: 10000;
+  z-index: 99999 !important;
   background: var(--footer-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -827,6 +825,7 @@ footer.fixed-footer {
   gap: 3px;
   box-sizing: border-box;
   box-shadow: 0 -4px 20px var(--shadow);
+  pointer-events: auto;
 }
 
 /* Mobile Smartphone Layout - Zero Horizontal Scrolling */
@@ -1110,7 +1109,7 @@ footer.fixed-footer {
     Made with &#128151;, by <a href="https://www.instagram.com/vishvjeetdahiyaa" target="_blank" rel="noopener" class="footer-link">Vishvjeet Dahiya</a>
   </div>
   <div class="footer-sub">
-    Open source &bull; Zero data collected &bull; Free forever
+    Open source &bull; No data stored &bull; Free forever
   </div>
 </footer>
 
