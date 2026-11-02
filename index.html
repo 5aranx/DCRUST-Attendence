@@ -1172,23 +1172,45 @@ footer.fixed-footer {
           projMsg = 'No classes held yet. <strong>' + sched + '</strong> total classes scheduled for semester. You can safely bunk up to <strong>' + initialSafe + '</strong> classes while keeping attendance &ge; 75%.';
         }
       } else if (c.pct >= 75) {
-        var safeNow = Math.floor((c.present - 0.75 * c.total) / 0.75);
-        var safeSem = Math.max(safeNow, Math.floor(c.present + 0.25 * rem - 0.75 * c.total));
-        if (safeNow > 0) {
+        var rawSafeNow = Math.floor((c.present - 0.75 * c.total) / 0.75);
+        var safeNow = sched > 0 ? Math.min(rem, Math.max(0, rawSafeNow)) : Math.max(0, rawSafeNow);
+        var rawSafeSem = Math.floor(c.present + 0.25 * rem - 0.75 * c.total);
+        var safeSem = sched > 0 ? Math.max(safeNow, Math.min(rem, Math.max(0, rawSafeSem))) : safeNow;
+
+        if (sched > 0 && rem === 0) {
+          statusHtml = '<span class="status-pill pill-ok">completed</span>';
+          projMsg = 'All scheduled classes completed. Final attendance: <strong>' + c.pct.toFixed(2) + '%</strong>.';
+        } else if (safeNow > 0) {
           statusHtml = '<span class="status-pill pill-ok">safe bunks ' + safeNow + '</span>';
+          if (sched > 0 && safeSem === rem && rem > 0) {
+            var minFinalPct = +((c.present) / (c.total + rem) * 100).toFixed(2);
+            projMsg = 'Current attendance: <strong>' + c.pct.toFixed(2) + '%</strong>. You have <strong>' + rem + '</strong> remaining classes in the semester. You can safely bunk all <strong>' + rem + '</strong> of them and still finish at <strong>' + minFinalPct + '%</strong> (&ge; 75%).';
+          } else if (sched > 0 && safeSem > safeNow) {
+            projMsg = 'Current attendance: <strong>' + c.pct.toFixed(2) + '%</strong>. You have <strong>' + rem + '</strong> remaining classes in the semester. You can safely bunk up to <strong>' + safeSem + '</strong> of them in total (or up to <strong>' + safeNow + '</strong> consecutively right now) while keeping attendance &ge; 75%.';
+          } else {
+            projMsg = 'Current attendance: <strong>' + c.pct.toFixed(2) + '%</strong>. You can safely bunk up to <strong>' + safeNow + '</strong> consecutive classes while keeping attendance &ge; 75%.';
+          }
         } else {
           statusHtml = '<span class="status-pill pill-warn">on edge 0 bunks</span>';
+          if (sched > 0 && safeSem > 0) {
+            var needAttend = rem - safeSem;
+            projMsg = 'Current attendance: <strong>' + c.pct.toFixed(2) + '%</strong>. You have <strong>' + rem + '</strong> remaining classes. You are on the edge right now (0 consecutive bunks), but across the semester you can safely bunk up to <strong>' + safeSem + '</strong> classes if you attend at least <strong>' + needAttend + '</strong>.';
+          } else {
+            projMsg = 'Current attendance: <strong>' + c.pct.toFixed(2) + '%</strong>. You cannot afford to miss any classes without dropping below 75%.';
+          }
         }
-        projMsg = 'Current attendance: <strong>' + c.pct.toFixed(2) + '%</strong>. You have <strong>' + rem + '</strong> remaining classes in the semester (can safely bunk up to <strong>' + safeSem + '</strong> in total while staying &ge; 75%).';
       } else {
         // Below 75%
         var rawNeed = Math.max(0, Math.ceil(3 * c.absent - c.present));
-        if (rem > 0) {
+        if (sched > 0 && rem === 0) {
+          statusHtml = '<span class="status-pill pill-bad">short attendance</span>';
+          projMsg = 'All scheduled classes completed. Final attendance: <strong>' + c.pct.toFixed(2) + '%</strong> (short of 75% requirement by ' + rawNeed + ' classes).';
+        } else if (rem > 0) {
           var maxPossiblePct = +((c.present + rem) / (c.total + rem) * 100).toFixed(1);
           if (rawNeed > rem) {
             // Cannot reach 75% even if attending all remaining classes!
             statusHtml = '<span class="status-pill pill-critical">attend ' + rem + ' classes</span>';
-            projMsg = 'Attendance is below 75% (' + c.pct.toFixed(2) + '%). Even if you attend all <strong>' + rem + '</strong> remaining classes in the session, your final attendance will reach <strong style="color:var(--bad)">' + maxPossiblePct + '%</strong> (cannot reach 75%).';
+            projMsg = 'Attendance is below 75% (' + c.pct.toFixed(2) + '%). Even if you attend all <strong>' + rem + '</strong> remaining classes in the semester, your final attendance will reach <strong style="color:var(--bad)">' + maxPossiblePct + '%</strong> (cannot reach 75%).';
           } else {
             // Can reach 75%
             statusHtml = '<span class="status-pill pill-bad">attend ' + rawNeed + ' classes</span>';
