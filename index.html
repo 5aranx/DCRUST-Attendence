@@ -73,20 +73,25 @@ body {
   line-height: 1.6;
   margin: 0;
   padding: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
   overflow-x: hidden !important;
   width: 100% !important;
   max-width: 100% !important;
   touch-action: pan-y;
 }
 .wrap {
+  flex: 1 0 auto;
   width: 100%;
   max-width: 820px;
   margin: 0 auto;
-  padding: 48px 20px 120px;
+  padding: 40px 18px 24px;
   box-sizing: border-box;
 }
 @media (max-width: 520px) {
-  .wrap { padding: 24px 12px 120px; }
+  .wrap { padding: 20px 14px 20px; }
 }
 header {
   display: flex;
@@ -807,27 +812,21 @@ tr:last-child td {
   color: var(--text);
 }
 
-footer.fixed-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  background: var(--footer-bg);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+footer.site-footer {
+  width: 100%;
+  margin-top: auto;
+  background: var(--surface);
   border-top: 1px solid var(--border);
-  padding: 8px 16px;
+  padding: 16px 16px max(16px, env(safe-area-inset-bottom, 16px));
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 2px;
-  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5);
+  gap: 5px;
   box-sizing: border-box;
-  width: 100%;
-  overflow: hidden;
+  position: relative;
+  z-index: 10;
 }
 
 /* Mobile Smartphone Layout - Zero Horizontal Scrolling */
@@ -1027,7 +1026,7 @@ footer.fixed-footer {
   }
 }
 .footer-credit {
-  color: var(--text-dim);
+  color: var(--text);
   font-size: 13px;
   font-weight: 500;
   text-align: center;
@@ -1043,7 +1042,7 @@ footer.fixed-footer {
   color: #ff6b8b;
 }
 .footer-sub {
-  color: var(--text-faint);
+  color: var(--text-dim);
   font-size: 11px;
   font-family: var(--mono);
   text-align: center;
@@ -1106,7 +1105,7 @@ footer.fixed-footer {
   <div id="res" hidden></div>
 
 </div>
-<footer class="fixed-footer">
+<footer class="site-footer">
   <div class="footer-credit">
     Made with &#128151;, by <a href="https://www.instagram.com/vishvjeetdahiyaa" target="_blank" rel="noopener" class="footer-link">Vishvjeet Dahiya</a>
   </div>
