@@ -47,9 +47,10 @@ ZZZzz /,`.-'`'    -.  ;-;;,_
 | :--- | :--- |
 | **Bunk & Attendance Calculator** | Real-time safe bunks if above 75%, or classes needed to recover if below 75%. |
 | **Instant Live Fetch** | Direct parallel fetch checks your complete attendance in ~2-3 seconds. |
+| **Credential Autofill** | Saves roll number and password locally in your browser for 1-tap checking. |
 | **Session History** | Click any course to view all sessions with date, time, and Present / Absent / Leave tags. |
 | **Anti-Abuse Protections** | Lockout after 3 failed attempts (2-minute cooldown), rate limiting, and origin guards. |
-| **Dark Theme** | Clean responsive dark interface built for mobile and desktop screens. |
+| **Dark & Light Themes** | Clean toggleable dark and light themes with instant persistence. |
 | **Forgot Password** | Direct button to the official Samarth password reset page. |
 
 ---
@@ -62,8 +63,8 @@ ZZZzz /,`.-'`'    -.  ;-;;,_
   (")_(")
 ```
 
-- Passwords are never saved to any database or storage.
-- No attendance data or snapshots are stored on your device or in any database.
+- Credentials are saved only inside your local browser storage for autofill convenience, never to any external database.
+- Clear button wipes your saved credentials and active attendance view instantly.
 - No tracking or third-party cookies.
 
 ---
