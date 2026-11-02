@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCRUSTM Attendance</title>
+<meta name="description" content="Check your DCRUSTM attendance from dcrustm.samarth.edu.in. Enter your roll number and password to view class-wise attendance.">
+<script src="./config.js"></script>
+<style>
+:root {
+  --bg: #0b0c0e;
+  --surface: #131519;
+  --surface-2: #1a1d22;
+  --border: #23262c;
+  --border-strong: #34383f;
+  --text: #d5d7dc;
+  --text-dim: #868b94;
+  --text-faint: #4f545c;
+  --ok: #6fae6f;
+  --warn: #c99a4f;
+  --bad: #c26060;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, monospace;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0;
+}
+.wrap {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 48px 20px 96px;
+  box-sizing: border-box;
+}
+@media (max-width: 520px) {
+  .wrap { padding: 24px 16px 96px; }
+}
+header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.site-title {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--text);
+}
+.intro {
+  color: var(--text-dim);
+  max-width: 60ch;
+  margin: 0 0 28px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.form-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+@media (min-width: 520px) {
+  .form-inputs {
+    flex-direction: row;
+    gap: 12px;
+  }
+}
+.field {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.field-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  display: block;
+}
+.form-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0 14px;
+  height: 42px;
+  font-size: 15px;
+  font-family: inherit;
+  border-radius: 4px;
+  width: 100%;
+}
+.form-input:focus {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+  outline: none;
+}
+.form-input::placeholder {
+  color: #727782;
+  opacity: 1;
+}
+.pw-wrap {
+  position: relative;
+  width: 100%;
+}
+.pw-wrap .form-input {
+  padding-right: 58px;
+}
+.pw-toggle {
+  position: absolute;
+  right: 1px;
+  top: 1px;
+  bottom: 1px;
+  width: 50px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2);
+  border: none;
+  border-left: 1px solid var(--border);
+  border-radius: 0 3px 3px 0;
+  color: var(--text-dim);
+  font-size: 12px;
+  font-family: var(--mono);
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+}
+.pw-toggle:hover {
+  color: var(--text);
+  background: #232730;
+}
+.form-btn-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+.btn-forgot {
+  background: var(--surface);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  padding: 0 16px;
+  height: 42px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.btn-forgot:hover {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+button[type="submit"] {
+  background: #ffffff;
+  color: #0b0c0e;
+  padding: 0 24px;
+  height: 42px;
+  border: 0;
+  border-radius: 4px;
+  font-weight: 600;
+  font-family: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+button[type="submit"]:hover:not(:disabled) {
+  background: #e2e4e9;
+}
+button[type="submit"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+@media (max-width: 520px) {
+  .form-btn-row {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+  .btn-forgot,
+  button[type="submit"] {
+    width: 100%;
+  }
+}
+#err {
+  color: var(--bad);
+  background: #1c1315;
+  border: 1px solid #3c1e22;
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-top: 14px;
+  line-height: 1.5;
+}
+#err[hidden] {
+  display: none;
+}
+#res {
+  margin-top: 32px;
+}
+.summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+@media (min-width: 480px) and (max-width: 767px) {
+  .summary {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (min-width: 768px) {
+  .summary {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 72px;
+  box-sizing: border-box;
+}
+.stat .label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+.stat .value {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+  display: block;
+  white-space: nowrap;
+}
+.stat .sublabel {
+  font-size: 10px;
+  color: var(--text-faint);
+  margin-top: 3px;
+  font-family: var(--mono);
+}
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+table {
+  width: 100%;
+  min-width: 600px;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+th {
+  color: var(--text-dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+  font-weight: 600;
+  white-space: nowrap;
+}
+th.col-pct,
+th.col-pal,
+th.col-rem {
+  text-align: center;
+}
+th.col-status {
+  text-align: right;
+}
+td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+tr:last-child td {
+  border-bottom: none;
+}
+.col-course {
+  width: 33%;
+  min-width: 165px;
+}
+.col-pct {
+  width: 11%;
+  min-width: 60px;
+}
+.col-pal {
+  width: 16%;
+  min-width: 80px;
+}
+.col-rem {
+  width: 12%;
+  min-width: 65px;
+}
+.col-status {
+  width: 28%;
+  min-width: 155px;
+}
+.course-name {
+  color: var(--text);
+  font-weight: 500;
+  line-height: 1.35;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  word-break: break-word;
+}
+.class-badge {
+  display: inline-block;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 1px 6px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.course-teacher {
+  color: var(--text-faint);
+  font-size: 11px;
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pct-cell {
+  font-family: var(--mono);
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+.pal-cell {
+  font-family: var(--mono);
+  color: var(--text-dim);
+  text-align: center;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.rem-cell {
+  font-family: var(--mono);
+  text-align: center;
+  white-space: nowrap;
+}
+.rem-val {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 13px;
+}
+.rem-sub {
+  display: block;
+  font-size: 10px;
+  color: var(--text-faint);
+  margin-top: 1px;
+}
+.status-cell {
+  text-align: right;
+}
+.status-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.status-pill.pill-ok {
+  background: rgba(39, 174, 96, 0.12);
+  color: var(--ok);
+  border: 1px solid rgba(39, 174, 96, 0.25);
+}
+.status-pill.pill-warn {
+  background: rgba(243, 156, 18, 0.12);
+  color: var(--warn);
+  border: 1px solid rgba(243, 156, 18, 0.25);
+}
+.status-pill.pill-bad {
+  background: rgba(235, 87, 87, 0.12);
+  color: var(--bad);
+  border: 1px solid rgba(235, 87, 87, 0.25);
+}
+.status-pill.pill-critical {
+  background: rgba(235, 87, 87, 0.22);
+  color: #ff6b6b;
+  border: 1px solid rgba(235, 87, 87, 0.4);
+}
+.status-pill.pill-none {
+  background: var(--surface-2);
+  color: var(--text-faint);
+  border: 1px solid var(--border);
+}
+.status-sub {
+  font-size: 10px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  font-family: var(--mono);
+}
+.course-row {
+  cursor: pointer;
+}
+.course-row:hover td {
+  background: var(--surface-2);
+}
+.course-row.is-open td {
+  background: var(--surface-2);
+  border-bottom-color: transparent;
+}
+.expand-caret {
+  font-size: 11px;
+  color: var(--text-dim);
+  display: inline-block;
+  margin-left: 4px;
+}
+.details-row td {
+  padding: 0;
+  background: #0d0f12;
+  border-bottom: 1px solid var(--border);
+}
+.details-wrap {
+  padding: 14px 16px 18px;
+  border-top: 1px dashed var(--border);
+}
+.details-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.details-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.details-title {
+  font-size: 12px;
+  font-family: var(--mono);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text);
+}
+.details-teacher {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.details-stat {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+.details-proj {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+.details-proj strong {
+  color: var(--text);
+}
+.filter-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.pill-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-family: var(--mono);
+  padding: 4px 8px;
+  cursor: pointer;
+}
+.pill-btn:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.pill-btn.active {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--border-strong);
+  font-weight: 600;
+}
+.records-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 2px 4px 2px 0;
+  scrollbar-gutter: stable;
+}
+@media (max-width: 768px) {
+  .records-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 540px) {
+  .records-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+}
+@media (max-width: 360px) {
+  .records-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.record-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-family: var(--mono);
+  box-sizing: border-box;
+  min-width: 0;
+}
+.record-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.record-date {
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+.record-slot {
+  color: var(--text-dim);
+  font-size: 10px;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+.record-badge {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 6px;
+}
+.badge-present { color: var(--ok); }
+.badge-absent { color: var(--bad); }
+.badge-leave { color: var(--warn); }
+.no-records {
+  color: var(--text-dim);
+  font-size: 12px;
+  font-family: var(--mono);
+  padding: 6px 0;
+}
+.res-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-top: 14px;
+  padding: 4px 2px 0;
+}
+.res-footer-actions {
+  display: flex;
+  gap: 16px;
+}
+.text-link {
+  color: var(--text-dim);
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-family: inherit;
+  padding: 0;
+}
+.text-link:hover {
+  color: var(--text);
+}
+.device-sync-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.sync-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--mono);
+}
+.sync-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6fae6f;
+  box-shadow: 0 0 6px rgba(111, 174, 111, 0.7);
+  display: inline-block;
+  flex-shrink: 0;
+}
+.sync-hint {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+footer.fixed-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(11, 12, 14, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid var(--border);
+  padding: 10px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 4px;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
+}
+.footer-credit {
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+}
+.footer-link {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+.footer-link:hover {
+  color: #ff6b8b;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="site-title">DCRUSTM attendance</span>
+  </header>
+
+  <p class="intro">Reads attendance from dcrustm.samarth.edu.in. Enter your roll number and SAMARTH password. Nothing is stored.</p>
+
+  <form id="form" novalidate>
+    <div class="form-inputs">
+      <div class="field">
+        <label for="u" class="field-label">Roll number</label>
+        <input class="form-input" type="text" id="u" name="username" placeholder="Roll number" autocomplete="username" spellcheck="false" required>
+      </div>
+      <div class="field">
+        <label for="p" class="field-label">Password</label>
+        <div class="pw-wrap">
+          <input class="form-input" type="password" id="p" name="password" placeholder="Password" autocomplete="current-password" required>
+          <button type="button" class="pw-toggle" id="pw-toggle" aria-label="Show password">show</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-btn-row">
+      <a href="https://dcrustm.samarth.edu.in/index.php/studentlogin/registration/reset-password" target="_blank" rel="noopener" class="btn-forgot">Forgot password</a>
+      <button type="submit" id="go">Check attendance</button>
+    </div>
+  </form>
+
+  <div id="err" hidden></div>
+  <div id="res" hidden></div>
+
+</div>
+<footer class="fixed-footer">
+  <div class="footer-credit">
+    Made with &#128151;, by <a href="https://www.instagram.com/vishvjeetdahiyaa" target="_blank" rel="noopener" class="footer-link">Vishvjeet Dahiya</a>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var cachedCreds = null;
+  var STORAGE_KEY = 'dcrustm_saved_attendance';
+
+  function timeAgo(ts) {
+    if (!ts) return 'recently';
+    var diff = Math.floor((Date.now() - ts) / 1000);
+    if (diff < 10) return 'just now';
+    if (diff < 60) return diff + 's ago';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    var days = Math.floor(diff / 86400);
+    if (days === 1) return 'yesterday';
+    if (days < 7) return days + 'd ago';
+    var d = new Date(ts);
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  }
+
+  function esc(s) {
+    return String(s || '').replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function pctColor(pct) {
+    if (pct >= 85) return 'var(--ok)';
+    if (pct >= 75) return 'var(--warn)';
+    return 'var(--bad)';
+  }
+
+  function showErr(msg) {
+    var el = document.getElementById('err');
+    el.textContent = msg;
+    el.hidden = false;
+  }
+
+  function clearErr() {
+    var el = document.getElementById('err');
+    el.textContent = '';
+    el.hidden = true;
+  }
+
+  function setBtn(disabled, text) {
+    var btn = document.getElementById('go');
+    btn.disabled = disabled;
+    btn.textContent = text;
+  }
+
+  function render(data, isFromDevice, savedAt) {
+    var res = document.getElementById('res');
+    var o = data.overall;
+
+    var fetchedDate = new Date(data.fetchedAt);
+    var fetchedLocal = fetchedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      + ', ' + fetchedDate.toLocaleDateString([], { month: 'short', day: 'numeric' });
+
+    var deviceBanner = '';
+    if (isFromDevice) {
+      var timeStr = timeAgo(savedAt || fetchedDate.getTime());
+      deviceBanner = '<div class="device-sync-bar">'
+        + '<div class="sync-pill"><span class="sync-dot"></span><span>Saved on device (' + esc(timeStr) + ')</span></div>'
+        + '<span class="sync-hint">Enter password above to refresh live</span>'
+        + '</div>';
+    }
+
+    var statusNote = isFromDevice ? 'saved snapshot' : 'live';
+
+    var rows = '';
+    for (var i = 0; i < data.courses.length; i++) {
+      var c = data.courses[i];
+      var rem = typeof c.remaining === 'number' ? c.remaining : 0;
+      var sched = typeof c.scheduled === 'number' ? c.scheduled : 0;
+      var statusHtml;
+      var projMsg = '';
+
+      if (c.total === 0) {
+        statusHtml = '<span class="status-pill pill-none">not marked yet</span>';
+        if (sched > 0) {
+          var initialSafe = Math.floor(0.25 * sched);
+          projMsg = 'No classes held yet. <strong>' + sched + '</strong> total classes scheduled for semester. You can safely bunk up to <strong>' + initialSafe + '</strong> classes while keeping attendance &ge; 75%.';
+        }
+      } else if (c.pct >= 75) {
+        var safeNow = Math.floor((c.present - 0.75 * c.total) / 0.75);
+        var safeSem = Math.max(safeNow, Math.floor(c.present + 0.25 * rem - 0.75 * c.total));
+        if (safeNow > 0) {
+          statusHtml = '<span class="status-pill pill-ok">safe bunks ' + safeNow + '</span>';
+        } else {
+          statusHtml = '<span class="status-pill pill-warn">on edge 0 bunks</span>';
+        }
+        projMsg = 'Current attendance: <strong>' + c.pct.toFixed(2) + '%</strong>. You have <strong>' + rem + '</strong> remaining classes in the semester (can safely bunk up to <strong>' + safeSem + '</strong> in total while staying &ge; 75%).';
+      } else {
+        // Below 75%
+        var rawNeed = Math.max(0, Math.ceil(3 * c.absent - c.present));
+        if (rem > 0) {
+          var maxPossiblePct = +((c.present + rem) / (c.total + rem) * 100).toFixed(1);
+          if (rawNeed > rem) {
+            // Cannot reach 75% even if attending all remaining classes!
+            statusHtml = '<span class="status-pill pill-critical">attend ' + rem + ' classes</span>';
+            projMsg = 'Attendance is below 75% (' + c.pct.toFixed(2) + '%). Even if you attend all <strong>' + rem + '</strong> remaining classes in the session, your final attendance will reach <strong style="color:var(--bad)">' + maxPossiblePct + '%</strong> (cannot reach 75%).';
+          } else {
+            // Can reach 75%
+            statusHtml = '<span class="status-pill pill-bad">attend ' + rawNeed + ' classes</span>';
+            projMsg = 'Attend <strong>' + rawNeed + '</strong> more classes to recover to 75.0%. If you attend all <strong>' + rem + '</strong> remaining classes, you will finish at <strong style="color:' + pctColor(maxPossiblePct) + '">' + maxPossiblePct + '%</strong>.';
+          }
+        } else {
+          statusHtml = '<span class="status-pill pill-bad">attend ' + rawNeed + ' classes</span>';
+          projMsg = 'Needs <strong>' + rawNeed + '</strong> more classes to reach 75%, but no more classes are scheduled.';
+        }
+      }
+
+      var records = c.records || [];
+      var recContent = '';
+      if (records.length === 0) {
+        recContent = '<div class="no-records">No attendance records have been marked on the portal yet for this class.</div>';
+      } else {
+        recContent = '<div class="records-grid" id="rec-grid-' + i + '">';
+        for (var r = 0; r < records.length; r++) {
+          var rec = records[r];
+          var bClass = 'badge-' + (rec.status || '').toLowerCase();
+          recContent += '<div class="record-card" data-status="' + esc(rec.status) + '">'
+            + '<div class="record-info">'
+            + '<span class="record-date">' + esc(rec.date) + '</span>'
+            + '<span class="record-slot">' + (rec.time || '--') + '</span>'
+            + '</div>'
+            + '<span class="record-badge ' + bClass + '">' + esc(rec.status) + '</span>'
+            + '</div>';
+        }
+        recContent += '</div>';
+      }
+
+      var filterPills = '';
+      if (records.length > 0) {
+        filterPills = '<div class="filter-pills">'
+          + '<button type="button" class="pill-btn active" data-filter="all" data-target="' + i + '">All (' + records.length + ')</button>'
+          + '<button type="button" class="pill-btn" data-filter="Present" data-target="' + i + '">Present (' + c.present + ')</button>'
+          + '<button type="button" class="pill-btn" data-filter="Absent" data-target="' + i + '">Absent (' + c.absent + ')</button>'
+          + (c.leave > 0 ? '<button type="button" class="pill-btn" data-filter="Leave" data-target="' + i + '">Leave (' + c.leave + ')</button>' : '')
+          + '</div>';
+      }
+
+      var detailsHtml = '<div class="details-wrap">'
+        + '<div class="details-header">'
+        + '<div class="details-title-row">'
+        + '<span class="details-title">Class Log: ' + esc(c.code) + '</span>'
+        + '<span class="details-teacher">Teacher: ' + esc(c.teacher || '--') + '</span>'
+        + (sched > 0 ? '<span class="details-stat">' + rem + ' of ' + sched + ' classes left</span>' : '')
+        + '</div>'
+        + filterPills
+        + '</div>'
+        + (projMsg ? '<div class="details-proj">' + projMsg + '</div>' : '')
+        + recContent
+        + '</div>';
+
+      rows += '<tr class="course-row" data-index="' + i + '">'
+        + '<td class="col-course">'
+        + '<div class="course-name">'
+        + esc(c.name)
+        + ' <span class="class-badge">' + esc(c.code) + '</span>'
+        + ' <span class="expand-caret" id="caret-' + i + '">&#9662;</span>'
+        + '</div>'
+        + '<div class="course-teacher">' + esc(c.teacher || '--') + '</div>'
+        + '</td>'
+        + '<td class="pct-cell" style="color:' + (c.total === 0 ? 'var(--text-faint)' : pctColor(c.pct)) + '">' + (c.total === 0 ? '--' : esc(c.pct.toFixed(2)) + '%') + '</td>'
+        + '<td class="pal-cell">' + (c.total === 0 ? '--' : (c.present > 0 ? esc(c.present) : '--') + ' / ' + (c.absent > 0 ? esc(c.absent) : '--') + ' / ' + (c.leave > 0 ? esc(c.leave) : '--')) + '</td>'
+        + '<td class="rem-cell">' + (sched > 0 ? ('<span class="rem-val">' + esc(rem) + '</span><span class="rem-sub">of ' + esc(sched) + '</span>') : '<span class="status-none">--</span>') + '</td>'
+        + '<td class="status-cell">' + statusHtml + '</td>'
+        + '</tr>'
+        + '<tr class="details-row" id="details-' + i + '" style="display:none">'
+        + '<td colspan="5">' + detailsHtml + '</td>'
+        + '</tr>';
+    }
+
+    res.innerHTML = deviceBanner
+      + '<div class="summary">'
+      + '<div class="stat"><span class="label">overall</span><span class="value" style="color:' + pctColor(o.pct) + '">' + esc(o.pct.toFixed(2)) + '%</span><span class="sublabel">' + (o.total || 0) + ' held</span></div>'
+      + '<div class="stat"><span class="label">present</span><span class="value" style="color:var(--ok)">' + esc(o.present) + '</span><span class="sublabel">attended</span></div>'
+      + '<div class="stat"><span class="label">absent</span><span class="value" style="color:var(--bad)">' + esc(o.absent) + '</span><span class="sublabel">missed</span></div>'
+      + '<div class="stat"><span class="label">leave</span><span class="value" style="color:var(--text-dim)">' + esc(o.leave) + '</span><span class="sublabel">approved</span></div>'
+      + '<div class="stat"><span class="label">remaining</span><span class="value" style="color:var(--text)">' + esc(o.remaining != null ? o.remaining : '--') + '</span><span class="sublabel">' + (o.scheduled ? o.scheduled + ' in sem' : 'classes left') + '</span></div>'
+      + '</div>'
+      + '<div class="table-wrap">'
+      + '<table>'
+      + '<thead><tr><th class="col-course">Course</th><th class="col-pct">%</th><th class="col-pal">P / A / L</th><th class="col-rem">Left</th><th class="col-status">Status</th></tr></thead>'
+      + '<tbody>' + rows + '</tbody>'
+      + '</table>'
+      + '</div>'
+      + '<div class="res-footer">'
+      + '<span>' + esc(fetchedLocal) + ' (' + statusNote + ')</span>'
+      + '<span class="res-footer-actions">'
+      + '<button class="text-link" id="btn-refresh">refresh</button>'
+      + '<button class="text-link" id="btn-clear">clear</button>'
+      + '</span>'
+      + '</div>';
+
+    var courseRows = res.querySelectorAll('.course-row');
+    for (var cr = 0; cr < courseRows.length; cr++) {
+      courseRows[cr].addEventListener('click', function () {
+        var idx = this.getAttribute('data-index');
+        var dRow = document.getElementById('details-' + idx);
+        var caret = document.getElementById('caret-' + idx);
+        if (!dRow) return;
+        var isOpen = dRow.style.display !== 'none';
+        dRow.style.display = isOpen ? 'none' : 'table-row';
+        this.classList.toggle('is-open', !isOpen);
+        if (caret) caret.innerHTML = isOpen ? '&#9662;' : '&#9652;';
+      });
+    }
+
+    var pillBtns = res.querySelectorAll('.pill-btn');
+    for (var pb = 0; pb < pillBtns.length; pb++) {
+      pillBtns[pb].addEventListener('click', function (e) {
+        e.stopPropagation();
+        var targetIdx = this.getAttribute('data-target');
+        var filter = this.getAttribute('data-filter');
+        var parent = this.parentElement;
+        var siblings = parent.querySelectorAll('.pill-btn');
+        for (var s = 0; s < siblings.length; s++) siblings[s].classList.remove('active');
+        this.classList.add('active');
+
+        var grid = document.getElementById('rec-grid-' + targetIdx);
+        if (!grid) return;
+        var cards = grid.querySelectorAll('.record-card');
+        for (var cd = 0; cd < cards.length; cd++) {
+          var cStat = cards[cd].getAttribute('data-status');
+          if (filter === 'all' || (cStat && cStat.toLowerCase() === filter.toLowerCase())) {
+            cards[cd].style.display = 'flex';
+          } else {
+            cards[cd].style.display = 'none';
+          }
+        }
+      });
+    }
+
+    document.getElementById('btn-refresh').addEventListener('click', function () {
+      if (cachedCreds && cachedCreds.username && cachedCreds.password) {
+        doFetch(cachedCreds.username, cachedCreds.password);
+      } else {
+        var pf = document.getElementById('p');
+        if (pf) {
+          pf.focus();
+          showErr('enter your password above to refresh live');
+        }
+      }
+    });
+    document.getElementById('btn-clear').addEventListener('click', function () {
+      res.innerHTML = '';
+      res.hidden = true;
+      cachedCreds = null;
+      try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+      var uf = document.getElementById('u');
+      if (uf) uf.value = '';
+      var pf = document.getElementById('p');
+      if (pf) {
+        pf.value = '';
+        pf.type = 'password';
+      }
+      var tgl = document.getElementById('pw-toggle');
+      if (tgl) tgl.textContent = 'show';
+      clearErr();
+    });
+  }
+
+  function doFetch(username, password) {
+    setBtn(true, 'Checking\u2026');
+    clearErr();
+
+    var workerUrl = window.DCRUSTM_WORKER;
+
+    fetch(workerUrl + '/attendance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: username, password: password }),
+    }).then(function (resp) {
+      if (!resp.ok) {
+        return resp.json().then(function (j) {
+          throw new Error(j.error || 'request failed');
+        }).catch(function (e) {
+          if (e && e.message && e.message !== '[object Object]') throw e;
+          throw new Error('request failed');
+        });
+      }
+      return resp.json();
+    }).then(function (data) {
+      cachedCreds = { username: username, password: password };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          username: username,
+          data: data,
+          savedAt: Date.now()
+        }));
+      } catch (_) {}
+      render(data, false);
+      document.getElementById('res').hidden = false;
+      setBtn(false, 'Check attendance');
+    }).catch(function (err) {
+      var msg = (err && err.message) ? err.message : 'could not reach server';
+      showErr(msg);
+      setBtn(false, 'Check attendance');
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var workerVal = window.DCRUSTM_WORKER;
+    if (!workerVal || workerVal.indexOf('your-worker') !== -1) {
+      showErr('config.js not edited. See README.');
+      setBtn(true, 'Check attendance');
+      return;
+    }
+
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        var saved = JSON.parse(raw);
+        if (saved && saved.username && saved.data) {
+          var uInput = document.getElementById('u');
+          if (uInput && !uInput.value) {
+            uInput.value = saved.username;
+          }
+          render(saved.data, true, saved.savedAt);
+          document.getElementById('res').hidden = false;
+        }
+      }
+    } catch (_) {}
+
+    var pwToggle = document.getElementById('pw-toggle');
+    var pwInput = document.getElementById('p');
+    if (pwToggle && pwInput) {
+      pwToggle.addEventListener('click', function () {
+        var showing = pwInput.type === 'text';
+        pwInput.type = showing ? 'password' : 'text';
+        pwToggle.textContent = showing ? 'show' : 'hide';
+        pwInput.focus();
+      });
+    }
+
+    document.getElementById('form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var username = document.getElementById('u').value.trim();
+      var password = document.getElementById('p').value;
+      if (!username || !password) {
+        showErr('enter roll number and password');
+        return;
+      }
+      clearErr();
+      doFetch(username, password);
+    });
+  });
+}());
+</script>
+</body>
+</html>
