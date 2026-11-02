@@ -707,48 +707,7 @@ tr:last-child td {
 .text-link:hover {
   color: var(--text);
 }
-.device-sync-bar {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 10px 14px;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-  width: 100%;
-  box-sizing: border-box;
-}
-@media (max-width: 520px) {
-  .device-sync-bar {
-    padding: 8px 12px;
-    gap: 6px;
-  }
-}
-.sync-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text);
-  font-size: 12px;
-  font-weight: 500;
-  font-family: var(--mono);
-}
-.sync-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #6fae6f;
-  box-shadow: 0 0 6px rgba(111, 174, 111, 0.7);
-  display: inline-block;
-  flex-shrink: 0;
-}
-.sync-hint {
-  color: var(--text-dim);
-  font-size: 12px;
-}
+
 footer.fixed-footer {
   position: fixed;
   bottom: 0;
@@ -1029,21 +988,6 @@ footer.fixed-footer {
   'use strict';
 
   var cachedCreds = null;
-  var STORAGE_KEY = 'dcrustm_saved_attendance';
-
-  function timeAgo(ts) {
-    if (!ts) return 'recently';
-    var diff = Math.floor((Date.now() - ts) / 1000);
-    if (diff < 10) return 'just now';
-    if (diff < 60) return diff + 's ago';
-    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
-    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
-    var days = Math.floor(diff / 86400);
-    if (days === 1) return 'yesterday';
-    if (days < 7) return days + 'd ago';
-    var d = new Date(ts);
-    return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  }
 
   function esc(s) {
     return String(s || '').replace(/[&<>"']/g, function (c) {
@@ -1075,24 +1019,13 @@ footer.fixed-footer {
     btn.textContent = text;
   }
 
-  function render(data, isFromDevice, savedAt) {
+  function render(data) {
     var res = document.getElementById('res');
     var o = data.overall;
 
     var fetchedDate = new Date(data.fetchedAt);
     var fetchedLocal = fetchedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
       + ', ' + fetchedDate.toLocaleDateString([], { month: 'short', day: 'numeric' });
-
-    var deviceBanner = '';
-    if (isFromDevice) {
-      var timeStr = timeAgo(savedAt || fetchedDate.getTime());
-      deviceBanner = '<div class="device-sync-bar">'
-        + '<div class="sync-pill"><span class="sync-dot"></span><span>Saved on device (' + esc(timeStr) + ')</span></div>'
-        + '<span class="sync-hint">Enter password above to refresh live</span>'
-        + '</div>';
-    }
-
-    var statusNote = isFromDevice ? 'saved snapshot' : 'live';
 
     var rows = '';
     for (var i = 0; i < data.courses.length; i++) {
@@ -1200,8 +1133,7 @@ footer.fixed-footer {
         + '</tr>';
     }
 
-    res.innerHTML = deviceBanner
-      + '<div class="summary">'
+    res.innerHTML = '<div class="summary">'
       + '<div class="stat"><span class="label">overall</span><span class="value" style="color:' + pctColor(o.pct) + '">' + esc(o.pct.toFixed(2)) + '%</span><span class="sublabel">' + (o.total || 0) + ' held</span></div>'
       + '<div class="stat"><span class="label">present</span><span class="value" style="color:var(--ok)">' + esc(o.present) + '</span><span class="sublabel">attended</span></div>'
       + '<div class="stat"><span class="label">absent</span><span class="value" style="color:var(--bad)">' + esc(o.absent) + '</span><span class="sublabel">missed</span></div>'
@@ -1215,7 +1147,7 @@ footer.fixed-footer {
       + '</table>'
       + '</div>'
       + '<div class="res-footer">'
-      + '<span>' + esc(fetchedLocal) + ' (' + statusNote + ')</span>'
+      + '<span>Checked at ' + esc(fetchedLocal) + '</span>'
       + '<span class="res-footer-actions">'
       + '<button class="text-link" id="btn-refresh">refresh</button>'
       + '<button class="text-link" id="btn-clear">clear</button>'
@@ -1280,7 +1212,7 @@ footer.fixed-footer {
       res.innerHTML = '';
       res.hidden = true;
       cachedCreds = null;
-      try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+      try { localStorage.removeItem('dcrustm_saved_attendance'); } catch (_) {}
       var uf = document.getElementById('u');
       if (uf) uf.value = '';
       var pf = document.getElementById('p');
@@ -1316,14 +1248,7 @@ footer.fixed-footer {
       return resp.json();
     }).then(function (data) {
       cachedCreds = { username: username, password: password };
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          username: username,
-          data: data,
-          savedAt: Date.now()
-        }));
-      } catch (_) {}
-      render(data, false);
+      render(data);
       document.getElementById('res').hidden = false;
       setBtn(false, 'Check attendance');
     }).catch(function (err) {
@@ -1342,18 +1267,7 @@ footer.fixed-footer {
     }
 
     try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        var saved = JSON.parse(raw);
-        if (saved && saved.username && saved.data) {
-          var uInput = document.getElementById('u');
-          if (uInput && !uInput.value) {
-            uInput.value = saved.username;
-          }
-          render(saved.data, true, saved.savedAt);
-          document.getElementById('res').hidden = false;
-        }
-      }
+      localStorage.removeItem('dcrustm_saved_attendance');
     } catch (_) {}
 
     var pwToggle = document.getElementById('pw-toggle');

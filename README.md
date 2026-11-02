@@ -46,7 +46,7 @@ ZZZzz /,`.-'`'    -.  ;-;;,_
 | Feature | Description |
 | :--- | :--- |
 | **Bunk & Attendance Calculator** | Real-time safe bunks if above 75%, or classes needed to recover if below 75%. |
-| **Remember on this Device** | Check once and your snapshot loads instantly next time without requiring a password. |
+| **Instant Live Fetch** | Direct parallel fetch checks your complete attendance in ~2-3 seconds. |
 | **Session History** | Click any course to view all sessions with date, time, and Present / Absent / Leave tags. |
 | **Anti-Abuse Protections** | Lockout after 3 failed attempts (2-minute cooldown), rate limiting, and origin guards. |
 | **Dark Theme** | Clean responsive dark interface built for mobile and desktop screens. |
@@ -63,7 +63,7 @@ ZZZzz /,`.-'`'    -.  ;-;;,_
 ```
 
 - Passwords are never saved to any database or storage.
-- Attendance snapshots are kept only on your device via browser local storage for fast re-checks.
+- No attendance data or snapshots are stored on your device or in any database.
 - No tracking or third-party cookies.
 
 ---
