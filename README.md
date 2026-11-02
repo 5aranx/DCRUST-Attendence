@@ -7,29 +7,36 @@
      attending     bunking
 ```
 
-# dcrust attendance tracker
+# DCRUST Attendance Tracker
 
-*because checking samarth at 8:59 am shouldn't be stressful*
+Fast attendance, bunk projections, and session records without the Samarth lag.
 
-[open website](https://vishvjeetdahiya.github.io/DCRUST/) &nbsp;&bull;&nbsp; [made by vishvjeet dahiya](https://www.instagram.com/vishvjeetdahiyaa)
+[![Live Site](https://img.shields.io/badge/Live%20Site-vishvjeetdahiya.github.io%2FDCRUST-7928CA?style=for-the-badge&logo=githubpages&logoColor=white)](https://vishvjeetdahiya.github.io/DCRUST/)
+[![Backend](https://img.shields.io/badge/Edge-Cloudflare%20Workers-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
+[![Speed](https://img.shields.io/badge/Cached%20Speed-%7E1ms-brightgreen?style=for-the-badge&logo=speedtest&logoColor=white)](https://vishvjeetdahiya.github.io/DCRUST/)
+[![Author](https://img.shields.io/badge/By-Vishvjeet%20Dahiya-FF69B4?style=for-the-badge&logo=instagram&logoColor=white)](https://www.instagram.com/vishvjeetdahiyaa)
+
+<br/>
+
+**[Open Attendance Tracker](https://vishvjeetdahiya.github.io/DCRUST/)** &nbsp;&bull;&nbsp; **[Report Issue](https://github.com/Vishvjeetdahiya/DCRUST/issues)** &nbsp;&bull;&nbsp; **[Creator Profile](https://www.instagram.com/vishvjeetdahiyaa)**
 
 </div>
 
 ---
 
-### what is this?
+## Overview
 
-samarth is slow, keeps logging you out, and gives you a headache right before class.
+Samarth takes too many clicks, logs out repeatedly, and forces you to calculate attendance manually.
 
-this is a simple, cute, dark-mode site that shows you:
-- your overall and subject-wise attendance percentage
-- how many classes you can safely bunk without falling below 75%
-- how many classes you must attend if you're in the danger zone
-- every date and time you were marked present, absent, or on leave
+This tracker gives you what you need immediately:
+- Overall and per-subject attendance percentages
+- Exact safe bunks left before dropping below 75%
+- Required classes to attend if attendance is below 75%
+- Full session records with dates and timestamps
 
 ---
 
-### cute things it does
+## Features
 
 ```text
       |\      _,,,---,,_
@@ -38,15 +45,19 @@ ZZZzz /,`.-'`'    -.  ;-;;,_
     '---''(_/--'  `-'\_)
 ```
 
-- **bunk calculator**: instantly tells you if you can stay in bed or if you need to run to class.
-- **remembers your device**: check it once on your phone or laptop. next time you open the site, your attendance loads right away without asking for your password.
-- **class records**: click any subject to see all dates, time slots, and P / A / L tags with quick filters.
-- **forgot password shortcut**: button that takes you straight to the password reset page if samarth locked you out.
-- **clean dark theme**: nice and easy on tired eyes during late-night checks.
+| Feature | Description |
+| :--- | :--- |
+| **Bunk & Attendance Calculator** | Real-time safe bunks if above 75%, or classes needed to recover if below 75%. |
+| **Remember on this Device** | Check once and your snapshot loads instantly next time without requiring a password. |
+| **Session History** | Click any course to view all sessions with date, time, and Present / Absent / Leave tags. |
+| **Fast Edge Caching** | Cached responses return in ~1ms without waiting on portal loading times. |
+| **Anti-Abuse Protections** | Lockout after 3 failed attempts (2-minute cooldown), rate limiting, and origin guards. |
+| **Dark Theme** | Clean responsive dark interface built for mobile and desktop screens. |
+| **Forgot Password** | Direct button to the official Samarth password reset page. |
 
 ---
 
-### privacy & stuff
+## Privacy
 
 ```text
    /\_/\  
@@ -54,17 +65,15 @@ ZZZzz /,`.-'`'    -.  ;-;;,_
   (")_(")
 ```
 
-- your password is never stored anywhere, ever.
-- your attendance is only saved locally in your own browser's storage so it opens instantly next time.
-- zero ads, zero tracking, just clean vibes.
+- Passwords are never saved to any database or storage.
+- Attendance snapshots are kept only on your device via browser local storage for fast re-checks.
+- No tracking or third-party cookies.
 
 ---
 
 <div align="center">
 
-made with care by [vishvjeet dahiya](https://www.instagram.com/vishvjeetdahiyaa)
-
-star this repo if it saved you from debarment
+Maintained by [Vishvjeet Dahiya](https://www.instagram.com/vishvjeetdahiyaa)
 
 </div>
 
