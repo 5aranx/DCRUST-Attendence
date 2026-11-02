@@ -439,6 +439,12 @@ tr:last-child td {
   color: var(--text-faint);
   margin-top: 1px;
 }
+.cell-label {
+  display: none;
+}
+.cell-val {
+  display: inline;
+}
 .status-cell {
   text-align: right;
 }
@@ -617,7 +623,7 @@ tr:last-child td {
 }
 @media (max-width: 580px) {
   .records-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr) !important;
     gap: 6px;
     max-height: 280px;
   }
@@ -628,40 +634,43 @@ tr:last-child td {
   border-radius: 4px;
   padding: 8px 10px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: space-between;
+  gap: 4px;
   font-size: 12px;
   font-family: var(--mono);
   box-sizing: border-box;
   min-width: 0;
+  width: 100%;
 }
-.record-info {
+.record-header {
   display: flex;
-  flex-direction: column;
-  min-width: 0;
-  flex: 1 1 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  width: 100%;
 }
 .record-date {
   color: var(--text);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
   letter-spacing: -0.01em;
 }
 .record-slot {
   color: var(--text-dim);
   font-size: 10px;
-  margin-top: 2px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .record-badge {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 10px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   white-space: nowrap;
   flex-shrink: 0;
-  margin-left: 6px;
 }
 .badge-present { color: var(--ok); }
 .badge-absent { color: var(--bad); }
@@ -841,32 +850,70 @@ footer.fixed-footer {
     grid-area: pal !important;
     padding: 0 !important;
     border: none !important;
-    text-align: left !important;
-    font-size: 12px !important;
-    color: var(--text-dim) !important;
     display: flex !important;
-    align-items: center !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 2px !important;
     min-width: 0 !important;
     width: auto !important;
+  }
+  .pal-cell .cell-label {
+    display: block !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: var(--text-faint) !important;
+    letter-spacing: 0.5px !important;
+    font-family: var(--mono) !important;
+    line-height: 1.2 !important;
+  }
+  .pal-cell .cell-val {
+    display: block !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: var(--text) !important;
+    font-family: var(--mono) !important;
+    letter-spacing: 0.3px !important;
+    line-height: 1.2 !important;
     white-space: nowrap !important;
   }
   .rem-cell {
     grid-area: rem !important;
     padding: 0 !important;
     border: none !important;
-    text-align: right !important;
-    font-size: 12px !important;
-    color: var(--text-dim) !important;
     display: flex !important;
-    align-items: center !important;
-    justify-content: flex-end !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    gap: 2px !important;
+    text-align: right !important;
     min-width: 0 !important;
     width: auto !important;
+  }
+  .rem-cell .cell-label {
+    display: block !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: var(--text-faint) !important;
+    letter-spacing: 0.5px !important;
+    font-family: var(--mono) !important;
+    text-align: right !important;
+    line-height: 1.2 !important;
+  }
+  .rem-cell .cell-val {
+    display: block !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: var(--text) !important;
+    font-family: var(--mono) !important;
+    text-align: right !important;
+    line-height: 1.2 !important;
     white-space: nowrap !important;
   }
   .rem-sub {
     display: inline !important;
     margin-left: 3px !important;
+    font-size: 11px !important;
+    color: var(--text-dim) !important;
+    font-weight: 400 !important;
   }
   .status-cell {
     grid-area: status !important;
@@ -1099,12 +1146,13 @@ footer.fixed-footer {
         for (var r = 0; r < records.length; r++) {
           var rec = records[r];
           var bClass = 'badge-' + (rec.status || '').toLowerCase();
+          var timeShort = (rec.time || '--').replace(/:00\b/g, '');
           recContent += '<div class="record-card" data-status="' + esc(rec.status) + '">'
-            + '<div class="record-info">'
+            + '<div class="record-header">'
             + '<span class="record-date">' + esc(rec.date) + '</span>'
-            + '<span class="record-slot">' + (rec.time || '--') + '</span>'
-            + '</div>'
             + '<span class="record-badge ' + bClass + '">' + esc(rec.status) + '</span>'
+            + '</div>'
+            + '<div class="record-slot">' + esc(timeShort) + '</div>'
             + '</div>';
         }
         recContent += '</div>';
@@ -1143,8 +1191,8 @@ footer.fixed-footer {
         + '<div class="course-teacher">' + esc(c.teacher || '--') + '</div>'
         + '</td>'
         + '<td class="pct-cell" style="color:' + (c.total === 0 ? 'var(--text-faint)' : pctColor(c.pct)) + '">' + (c.total === 0 ? '--' : esc(c.pct.toFixed(2)) + '%') + '</td>'
-        + '<td class="pal-cell"><span class="col-lbl">P / A / L: </span>' + (c.total === 0 ? '--' : (c.present > 0 ? esc(c.present) : '--') + ' / ' + (c.absent > 0 ? esc(c.absent) : '--') + ' / ' + (c.leave > 0 ? esc(c.leave) : '--')) + '</td>'
-        + '<td class="rem-cell"><span class="col-lbl">Left: </span>' + (sched > 0 ? ('<span class="rem-val">' + esc(rem) + '</span><span class="rem-sub">of ' + esc(sched) + '</span>') : '<span class="status-none">--</span>') + '</td>'
+        + '<td class="pal-cell"><span class="cell-label">P / A / L</span><span class="cell-val">' + (c.total === 0 ? '--' : (c.present > 0 ? esc(c.present) : '--') + ' / ' + (c.absent > 0 ? esc(c.absent) : '--') + ' / ' + (c.leave > 0 ? esc(c.leave) : '--')) + '</span></td>'
+        + '<td class="rem-cell"><span class="cell-label">Remaining</span><span class="cell-val">' + (sched > 0 ? ('<span class="rem-val">' + esc(rem) + '</span><span class="rem-sub">of ' + esc(sched) + '</span>') : '<span class="status-none">--</span>') + '</span></td>'
         + '<td class="status-cell">' + statusHtml + '</td>'
         + '</tr>'
         + '<tr class="details-row" id="details-' + i + '" hidden>'

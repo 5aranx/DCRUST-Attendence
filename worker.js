@@ -82,24 +82,7 @@ function cookieHeader(jar) {
   return [...jar.entries()].map(([k, v]) => `${k}=${v}`).join('; ');
 }
 
-async function followRedirects(url, init, jar, maxHops) {
-  let current = url, hops = 0;
-  while (hops < (maxHops || 10)) {
-    const res = await fetch(current, { ...init, redirect: 'manual' });
-    mergeSetCookie(jar, res.headers);
-    const loc = res.headers.get('location');
-    if ((res.status === 301 || res.status === 302 || res.status === 303 || res.status === 307 || res.status === 308) && loc) {
-      current = loc.startsWith('http') ? loc : new URL(loc, current).href;
-      if (res.status !== 307 && res.status !== 308) {
-        init = { headers: init.headers, redirect: 'manual', signal: init.signal };
-      }
-      hops++;
-    } else {
-      return res;
-    }
-  }
-  throw new Error('too many redirects');
-}
+
 
 async function pLimit(concurrency, tasks) {
   const results = new Array(tasks.length);
@@ -226,20 +209,33 @@ export default {
 
       let loginPost;
       try {
-        loginPost = await followRedirects(`${BASE}/index.php/site/login`, {
+        loginPost = await fetch(`${BASE}/index.php/site/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': cookieHeader(jar) },
           body: formBody.toString(),
+          redirect: 'manual',
           signal: AbortSignal.timeout(15000),
-        }, jar, 10);
+        });
       } catch (_) {
         return json({ error: 'upstream error' }, 502, request);
       }
 
       mergeSetCookie(jar, loginPost.headers);
-      await loginPost.text();
 
-      // Step 3: Verify login and fetch timetable in parallel
+      const loc = loginPost.headers.get('location');
+      const isRedirect = (loginPost.status === 301 || loginPost.status === 302 || loginPost.status === 303) && loc;
+
+      if (!isRedirect) {
+        recordFail(username);
+        const rec = failedAttempts.get(username);
+        const left = 3 - (rec ? rec.count : 0);
+        if (left <= 0) {
+          return json({ error: 'Invalid credentials. Account locked for 2 minutes due to 3 failed attempts.' }, 401, request);
+        }
+        return json({ error: 'Invalid credentials. (' + left + ' attempt' + (left === 1 ? '' : 's') + ' left before 2-minute lockout)' }, 401, request);
+      }
+
+      // Step 3: Fetch attendance index and timetable in parallel
       let attendancePage, timetablePage;
       try {
         [attendancePage, timetablePage] = await Promise.all([
@@ -325,7 +321,7 @@ export default {
         }
       });
 
-      const [fetched, timetableSlots] = await Promise.all([pLimit(3, tasks), ttPromise]);
+      const [fetched, timetableSlots] = await Promise.all([Promise.all(tasks.map((t) => t())), ttPromise]);
 
       // Step 6: Compute distinct classes and metrics
       let totalPresent = 0, totalAbsent = 0, totalLeave = 0;
