@@ -58,6 +58,20 @@ ZZZzz /,`.-'`'    -.  ;-;;,_
 
 ---
 
+## Project layout
+
+```text
+index.html   App shell, login, dashboard, subjects, history, modals
+styles.css   Warm-paper design system, responsive rules, light/dark themes
+app.js       Fetching, calculations, rendering, routing, storage, theming
+config.js    Public worker URL
+worker.js    Cloudflare Worker (Samarth fetch, rate limits, lockout, origin allowlist)
+```
+
+The frontend is plain HTML, CSS and JavaScript — no build step, no framework.
+
+---
+
 ## Privacy & Open Source
 
 ```text
