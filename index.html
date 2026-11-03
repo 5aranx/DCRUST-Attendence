@@ -335,6 +335,109 @@ button[type="submit"]:disabled {
 #res {
   margin-top: 32px;
 }
+.sem-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  gap: 12px;
+  box-sizing: border-box;
+  width: 100%;
+}
+.sem-label-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.sem-label-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.sem-count-badge {
+  font-size: 11px;
+  font-family: var(--mono);
+  background: var(--surface-2);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1px 7px;
+  white-space: nowrap;
+}
+.sem-select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  max-width: 65%;
+}
+.sem-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--surface-2);
+  color: var(--title);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 7px 30px 7px 12px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  width: 100%;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.sem-select:hover {
+  border-color: var(--text-dim);
+}
+.sem-select:focus {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+[data-theme="light"] .sem-select:focus {
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+}
+.sem-select-arrow {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  color: var(--text-dim);
+  font-size: 10px;
+  line-height: 1;
+}
+.sem-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-family: var(--mono);
+  background: var(--surface-2);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+@media (max-width: 520px) {
+  .sem-bar {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+  .sem-select {
+    font-size: 12px;
+    padding: 6px 26px 6px 10px;
+  }
+}
 .summary {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1118,6 +1221,8 @@ footer.fixed-footer {
   'use strict';
 
   var cachedCreds = null;
+  var currentData = null;
+  var currentSem = null;
 
   function esc(s) {
     return String(s || '').replace(/[&<>"']/g, function (c) {
@@ -1149,17 +1254,147 @@ footer.fixed-footer {
     btn.textContent = text;
   }
 
-  function render(data) {
-    var res = document.getElementById('res');
-    var o = data.overall;
+  function getCourseSemester(c) {
+    if (c.semester && typeof c.semester === 'string' && c.semester.trim()) {
+      return c.semester.trim();
+    }
+    // Smart fallback if older worker version is used
+    var dates = (c.records || []).map(function (r) { return r.date; }).filter(Boolean);
+    if (dates.length > 0) {
+      dates.sort();
+      var mid = dates[Math.floor(dates.length / 2)];
+      var ym = mid.substring(0, 7);
+      if (ym >= '2025-01' && ym <= '2025-06') return 'SEMESTER - 4';
+      if (ym >= '2025-07' && ym <= '2025-11') return 'SEMESTER - 5';
+      if (ym >= '2025-12' && ym <= '2026-06') return 'SEMESTER - 6';
+      if (ym >= '2026-07' && ym <= '2026-12') return 'SEMESTER - 7';
+    }
+    var code = String(c.code || '');
+    var m = code.match(/([A-Z]+)(\d)(\d)?/i);
+    if (m) {
+      var d1 = parseInt(m[2], 10);
+      var d2 = m[3] ? parseInt(m[3], 10) : 0;
+      if (d1 === 4) return 'SEMESTER - 7';
+      if (d1 === 3) return (d2 % 2 === 1) ? 'SEMESTER - 5' : 'SEMESTER - 6';
+      if (d1 === 2) return 'SEMESTER - 4';
+      if (d1 === 1) return 'SEMESTER - 1';
+    }
+    return '';
+  }
 
-    var fetchedDate = new Date(data.fetchedAt);
+  function getSemNum(s) {
+    var m = String(s || '').match(/\d+/);
+    return m ? parseInt(m[0], 10) : 0;
+  }
+
+  function formatSemName(sem) {
+    if (!sem || sem === 'all') return 'All Semesters';
+    return sem.replace(/^SEMESTER\s*-\s*(\d+)/i, 'Semester $1').replace(/^SEMESTER\s*(\d+)/i, 'Semester $1');
+  }
+
+  function formatSemOption(sem, courses) {
+    if (sem === 'all') return 'All Semesters';
+    var clean = formatSemName(sem);
+    var session = '';
+    if (courses) {
+      for (var i = 0; i < courses.length; i++) {
+        if (courses[i].semester === sem && courses[i].session) {
+          session = courses[i].session;
+          break;
+        }
+      }
+    }
+    return session ? clean + ' (' + session + ')' : clean;
+  }
+
+  function findLastAttendedSemester(list, courses) {
+    // list is sorted descending by semester number
+    // Find latest semester that has classes attended (total > 0 or present > 0)
+    for (var i = 0; i < list.length; i++) {
+      var s = list[i];
+      var semCourses = courses.filter(function (c) { return c.semester === s; });
+      var hasAttended = semCourses.some(function (c) {
+        return (c.total > 0) || (c.present > 0);
+      });
+      if (hasAttended) {
+        return s;
+      }
+    }
+    // If no classes attended yet in any semester, default to the latest enrolled semester
+    return list.length > 0 ? list[0] : 'all';
+  }
+
+  function render(data) {
+    currentData = data;
+
+    // Normalize semester on all courses
+    for (var i = 0; i < currentData.courses.length; i++) {
+      currentData.courses[i].semester = getCourseSemester(currentData.courses[i]);
+    }
+
+    // Collect distinct semesters
+    var semSet = {};
+    var semList = [];
+    for (var i = 0; i < currentData.courses.length; i++) {
+      var s = currentData.courses[i].semester;
+      if (s && !semSet[s]) {
+        semSet[s] = true;
+        semList.push(s);
+      }
+    }
+
+    // Sort descending by semester number (e.g. Sem 7, Sem 6, Sem 5, Sem 4)
+    semList.sort(function (a, b) {
+      return getSemNum(b) - getSemNum(a);
+    });
+
+    // Default to the last attended semester if not already selected or invalid
+    if (!currentSem || (currentSem !== 'all' && semList.indexOf(currentSem) === -1)) {
+      currentSem = findLastAttendedSemester(semList, currentData.courses);
+    }
+
+    renderSemesterView(semList);
+  }
+
+  function renderSemesterView(semList) {
+    var res = document.getElementById('res');
+    var activeCourses = (currentSem === 'all')
+      ? currentData.courses
+      : currentData.courses.filter(function (c) { return c.semester === currentSem; });
+
+    var o;
+    if (currentSem === 'all') {
+      o = currentData.overall;
+    } else {
+      var p = 0, a = 0, l = 0, sched = 0, rem = 0;
+      for (var i = 0; i < activeCourses.length; i++) {
+        var ac = activeCourses[i];
+        p += (ac.present || 0);
+        a += (ac.absent || 0);
+        l += (ac.leave || 0);
+        sched += (typeof ac.scheduled === 'number' ? ac.scheduled : 0);
+        rem += (typeof ac.remaining === 'number' ? ac.remaining : 0);
+      }
+      var tot = p + a;
+      var pct = tot > 0 ? +((p / tot) * 100).toFixed(2) : 0;
+      o = {
+        present: p,
+        absent: a,
+        leave: l,
+        total: tot,
+        pct: pct,
+        scheduled: sched,
+        remaining: rem,
+      };
+    }
+
+    var fetchedDate = new Date(currentData.fetchedAt);
     var fetchedLocal = fetchedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
       + ', ' + fetchedDate.toLocaleDateString([], { month: 'short', day: 'numeric' });
 
     var rows = '';
-    for (var i = 0; i < data.courses.length; i++) {
-      var c = data.courses[i];
+    for (var i = 0; i < activeCourses.length; i++) {
+      var c = activeCourses[i];
       var rem = typeof c.remaining === 'number' ? c.remaining : 0;
       var sched = typeof c.scheduled === 'number' ? c.scheduled : 0;
       var statusHtml;
@@ -1266,11 +1501,16 @@ footer.fixed-footer {
         + recContent
         + '</div>';
 
+      var semBadgeHtml = (currentSem === 'all' && c.semester)
+        ? '<span class="sem-badge">' + esc(formatSemName(c.semester)) + '</span>'
+        : '';
+
       rows += '<tr class="course-row" data-index="' + i + '">'
         + '<td class="col-course">'
         + '<div class="course-name">'
         + esc(c.name)
         + ' <span class="class-badge">' + esc(c.code) + '</span>'
+        + semBadgeHtml
         + ' <span class="expand-caret" id="caret-' + i + '">&#9662;</span>'
         + '</div>'
         + '<div class="course-teacher">' + esc(c.teacher || '--') + '</div>'
@@ -1285,7 +1525,39 @@ footer.fixed-footer {
         + '</tr>';
     }
 
-    res.innerHTML = '<div class="summary">'
+    if (activeCourses.length === 0) {
+      rows = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-dim)">No courses found for this semester.</td></tr>';
+    }
+
+    var semBarHtml = '';
+    if (semList && semList.length > 0) {
+      var semOptions = '';
+      for (var si = 0; si < semList.length; si++) {
+        var sKey = semList[si];
+        var isSel = (sKey === currentSem) ? ' selected' : '';
+        semOptions += '<option value="' + esc(sKey) + '"' + isSel + '>' + esc(formatSemOption(sKey, currentData.courses)) + '</option>';
+      }
+      if (semList.length > 1) {
+        var isAllSel = (currentSem === 'all') ? ' selected' : '';
+        semOptions += '<option value="all"' + isAllSel + '>All Semesters (' + currentData.courses.length + ' courses)</option>';
+      }
+
+      semBarHtml = '<div class="sem-bar">'
+        + '<div class="sem-label-group">'
+        + '<span class="sem-label-title">Semester</span>'
+        + '<span class="sem-count-badge">' + activeCourses.length + ' ' + (activeCourses.length === 1 ? 'course' : 'courses') + '</span>'
+        + '</div>'
+        + '<div class="sem-select-wrap">'
+        + '<select id="sem-select" class="sem-select" aria-label="Select semester">'
+        + semOptions
+        + '</select>'
+        + '<span class="sem-select-arrow" aria-hidden="true">&#9662;</span>'
+        + '</div>'
+        + '</div>';
+    }
+
+    res.innerHTML = semBarHtml
+      + '<div class="summary">'
       + '<div class="stat"><span class="label">overall</span><span class="value" style="color:' + pctColor(o.pct) + '">' + esc(o.pct.toFixed(2)) + '%</span><span class="sublabel">' + (o.total || 0) + ' held</span></div>'
       + '<div class="stat"><span class="label">present</span><span class="value" style="color:var(--ok)">' + esc(o.present) + '</span><span class="sublabel">attended</span></div>'
       + '<div class="stat"><span class="label">absent</span><span class="value" style="color:var(--bad)">' + esc(o.absent) + '</span><span class="sublabel">missed</span></div>'
@@ -1305,6 +1577,14 @@ footer.fixed-footer {
       + '<button class="text-link" id="btn-clear">clear</button>'
       + '</span>'
       + '</div>';
+
+    var semSel = res.querySelector('#sem-select');
+    if (semSel) {
+      semSel.addEventListener('change', function () {
+        currentSem = this.value;
+        renderSemesterView(semList);
+      });
+    }
 
     var courseRows = res.querySelectorAll('.course-row');
     for (var cr = 0; cr < courseRows.length; cr++) {
@@ -1360,10 +1640,13 @@ footer.fixed-footer {
         }
       }
     });
+
     document.getElementById('btn-clear').addEventListener('click', function () {
       res.innerHTML = '';
       res.hidden = true;
       cachedCreds = null;
+      currentData = null;
+      currentSem = null;
       try {
         localStorage.removeItem('dcrustm_saved_attendance');
         localStorage.removeItem('dcrustm_saved_creds');

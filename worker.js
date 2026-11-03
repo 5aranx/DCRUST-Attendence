@@ -345,13 +345,13 @@ export default {
       const attendanceHtml = await attendancePage.text();
 
       if (!attendanceHtml.includes('Enrolled Classes')) {
-        recordFail(username);
-        const rec = failedAttempts.get(username);
-        const left = 3 - (rec ? rec.count : 0);
-        if (left <= 0) {
-          return json({ error: 'Invalid credentials. Account locked for 2 minutes due to 3 failed attempts.' }, 401, request);
+        recordUserLoginFailure(username);
+        const rec = userFailedLogins.get(username);
+        const left = Math.max(0, 3 - (rec ? rec.count : 0));
+        if (left === 0) {
+          return json({ error: 'Invalid credentials. Account temporarily locked for 3 minutes due to 3 failed attempts.' }, 401, request);
         }
-        return json({ error: 'Invalid credentials. (' + left + ' attempt' + (left === 1 ? '' : 's') + ' left before 2-minute lockout)' }, 401, request);
+        return json({ error: `Invalid roll number or password. (${left} attempt${left === 1 ? '' : 's'} left before 3-minute lockout)` }, 401, request);
       }
 
       let studentId = '';
@@ -363,11 +363,28 @@ export default {
       }
 
       // Step 4: Parse class list
-      const classRe = /<tr class="text-center">\s*<td>\d+<\/td>\s*<td>([^<]+)<\/td>\s*<td>([^<]+)<\/td>\s*<td>[^<]*<\/td>\s*<td>[^<]*<\/td>\s*<td><a[^>]*href="([^"]+)"[^>]*>View<\/a>/g;
+      const stripTags = (s) => (s || '').replace(/<[^>]+>/g, '').trim();
+      const trRe = /<tr[^>]*class="text-center"[^>]*>([\s\S]*?)<\/tr>/gi;
       const classes = [];
-      let classMatch;
-      while ((classMatch = classRe.exec(attendanceHtml)) !== null) {
-        classes.push({ className: classMatch[1].trim(), courseName: classMatch[2].trim(), href: classMatch[3] });
+      let trMatch;
+      while ((trMatch = trRe.exec(attendanceHtml)) !== null) {
+        const trContent = trMatch[1];
+        const tdRe = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+        const tds = [];
+        let tdMatch;
+        while ((tdMatch = tdRe.exec(trContent)) !== null) {
+          tds.push(stripTags(tdMatch[1]));
+        }
+        const hrefMatch = trContent.match(/<a[^>]*href="([^"]+)"[^>]*>View<\/a>/i);
+        if (tds.length >= 3 && hrefMatch) {
+          classes.push({
+            className: tds[1],
+            courseName: tds[2],
+            semester: tds.length >= 5 ? tds[3] : '',
+            session: tds.length >= 5 ? tds[4] : '',
+            href: hrefMatch[1],
+          });
+        }
       }
 
       if (classes.length === 0) return json({ error: 'unexpected class list layout' }, 502, request);
@@ -408,7 +425,7 @@ export default {
         }
       });
 
-      const [fetched, timetableSlots] = await Promise.all([Promise.all(tasks.map((t) => t())), ttPromise]);
+      const [fetched, timetableSlots] = await Promise.all([pLimit(10, tasks), ttPromise]);
 
       // Step 6: Compute distinct classes and metrics
       let totalPresent = 0, totalAbsent = 0, totalLeave = 0;
@@ -438,6 +455,8 @@ export default {
           code: row.className,
           baseCode: baseCode,
           name: name,
+          semester: row.semester || '',
+          session: row.session || '',
           classes: [row.className],
           teacher: row.teacher || '',
           present: row.present,
@@ -456,12 +475,15 @@ export default {
       const overallTotal = totalPresent + totalAbsent;
       const overallPct = overallTotal > 0 ? +(totalPresent / overallTotal * 100).toFixed(2) : 0;
 
+      const semesters = [...new Set(courses.map((c) => c.semester).filter(Boolean))];
+
       userFailedLogins.delete(username);
       ipFailedLogins.delete(clientIp);
 
       const responseData = {
         username,
         fetchedAt: new Date().toISOString(),
+        semesters,
         overall: {
           present: totalPresent,
           absent: totalAbsent,
