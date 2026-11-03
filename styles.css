@@ -2263,7 +2263,7 @@ img { max-width: 100%; }
   .login-title { max-width: 14ch; margin-bottom: 18px; }
   .login-lede { max-width: 58ch; }
   .principles { margin-top: 28px; }
-  .login-panel { max-width: 520px; }
+  .login-panel { max-width: 520px; margin-inline: auto; }
 
   .view-title { max-width: 20ch; }
 
@@ -2394,12 +2394,13 @@ img { max-width: 100%; }
   }
 
   .login-editorial { display: contents; }
-  .login-layout > .kicker { order: 1; }
-  .login-title { order: 2; }
-  .login-lede { order: 3; }
-  .login-panel { order: 4; margin-top: 26px; max-width: none; }
+  .login-layout > .kicker { order: 1; justify-content: center; }
+  .login-title { order: 2; text-align: center; margin-inline: auto; }
+  .login-lede { order: 3; text-align: center; margin-inline: auto; }
+  .login-panel { order: 4; margin: 26px auto 0; max-width: 460px; }
+  .login-panel .panel-head { text-align: center; }
   .principles { order: 5; margin-top: 28px; }
-  .login-source { order: 6; }
+  .login-source { order: 6; text-align: center; }
 
   .section { padding-block: 34px; }
 
