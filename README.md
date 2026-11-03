@@ -12,13 +12,14 @@
 Fast attendance, bunk projections, and session records without the Samarth lag.
 
 [![Live Site](https://img.shields.io/badge/Live%20Site-vishvjeetdahiya.github.io%2FDCRUST-7928CA?style=for-the-badge&logo=githubpages&logoColor=white)](https://vishvjeetdahiya.github.io/DCRUST/)
+[![WhatsApp Group](https://img.shields.io/badge/WhatsApp-Community-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://chat.whatsapp.com/DjYe0ubx4tvLR9yyRR54hJ)
 [![Open Source](https://img.shields.io/badge/Open%20Source-100%25-brightgreen?style=for-the-badge&logo=github)](https://github.com/Vishvjeetdahiya/DCRUST)
 [![Free Forever](https://img.shields.io/badge/Free-Forever-blue?style=for-the-badge)](https://github.com/Vishvjeetdahiya/DCRUST)
 [![Author](https://img.shields.io/badge/By-Vishvjeet%20Dahiya-FF69B4?style=for-the-badge&logo=instagram&logoColor=white)](https://www.instagram.com/vishvjeetdahiyaa)
 
 <br/>
 
-**[Open Attendance Tracker](https://vishvjeetdahiya.github.io/DCRUST/)** &nbsp;&bull;&nbsp; **[Report Issue](https://github.com/Vishvjeetdahiya/DCRUST/issues)** &nbsp;&bull;&nbsp; **[Creator Profile](https://www.instagram.com/vishvjeetdahiyaa)**
+**[Open Attendance Tracker](https://vishvjeetdahiya.github.io/DCRUST/)** &nbsp;&bull;&nbsp; **[WhatsApp Community](https://chat.whatsapp.com/DjYe0ubx4tvLR9yyRR54hJ)** &nbsp;&bull;&nbsp; **[Report Issue](https://github.com/Vishvjeetdahiya/DCRUST/issues)** &nbsp;&bull;&nbsp; **[Creator Profile](https://www.instagram.com/vishvjeetdahiyaa)**
 
 </div>
 
