@@ -496,8 +496,105 @@ button[type="submit"]:disabled {
     height: 32px;
   }
 }
+.summary-section {
+  margin-top: 24px;
+  margin-bottom: 18px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.summary-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  font-weight: 700;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.summary-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
 .summary {
-  display: none !important;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+@media (max-width: 440px) {
+  .summary {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .stat:last-child {
+    grid-column: span 2;
+  }
+}
+@media (min-width: 480px) and (max-width: 767px) {
+  .summary {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+}
+@media (min-width: 768px) {
+  .summary {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+  }
+}
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 70px;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.stat:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+@media (max-width: 440px) {
+  .stat {
+    padding: 10px 11px;
+    min-height: 62px;
+  }
+  .stat .value {
+    font-size: 18px !important;
+  }
+}
+.stat .label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+.stat .value {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  display: block;
+  white-space: nowrap;
+}
+.stat .sublabel {
+  font-size: 10.5px;
+  color: var(--text-faint);
+  margin-top: 3px;
+  font-family: var(--mono);
 }
 .table-wrap {
   width: 100%;
@@ -1470,7 +1567,7 @@ footer.fixed-footer {
   var currentSem = null;
 
   function esc(s) {
-    return String(s || '').replace(/[&<>"']/g, function (c) {
+    return String(s != null ? s : '').replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
@@ -1607,10 +1704,8 @@ footer.fixed-footer {
       ? currentData.courses
       : currentData.courses.filter(function (c) { return c.semester === currentSem; });
 
-    var o;
-    if (currentSem === 'all') {
-      o = currentData.overall;
-    } else {
+    var o = (currentSem === 'all' && currentData.overall) ? currentData.overall : null;
+    if (!o) {
       var p = 0, a = 0, l = 0, sched = 0, rem = 0;
       for (var i = 0; i < activeCourses.length; i++) {
         var ac = activeCourses[i];
@@ -1633,9 +1728,9 @@ footer.fixed-footer {
       };
     }
 
-    var fetchedDate = new Date(currentData.fetchedAt);
-    var fetchedLocal = fetchedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-      + ', ' + fetchedDate.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    var fetchedDate = (currentData && currentData.fetchedAt) ? new Date(currentData.fetchedAt) : new Date();
+    var fetchedLocal = isNaN(fetchedDate.getTime()) ? 'just now' : (fetchedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      + ', ' + fetchedDate.toLocaleDateString([], { month: 'short', day: 'numeric' }));
 
     var rows = '';
     for (var i = 0; i < activeCourses.length; i++) {
@@ -1779,6 +1874,25 @@ footer.fixed-footer {
         + '</div>';
     }
 
+    var semTitle = (currentSem === 'all')
+      ? 'Overall Attendance (All Semesters)'
+      : (formatSemName(currentSem) + ' Overall Attendance');
+
+    var summaryHtml = '';
+    if (activeCourses.length > 0 && o) {
+      var oPct = (typeof o.pct === 'number' && !isNaN(o.pct)) ? o.pct : 0;
+      summaryHtml = '<div class="summary-section">'
+        + '<div class="summary-title">' + esc(semTitle) + '</div>'
+        + '<div class="summary">'
+        + '<div class="stat"><span class="label">overall</span><span class="value" style="color:' + pctColor(oPct) + '">' + esc(oPct.toFixed(2)) + '%</span><span class="sublabel">' + (o.total || 0) + ' held</span></div>'
+        + '<div class="stat"><span class="label">present</span><span class="value" style="color:var(--ok)">' + esc(o.present != null ? o.present : 0) + '</span><span class="sublabel">attended</span></div>'
+        + '<div class="stat"><span class="label">absent</span><span class="value" style="color:var(--bad)">' + esc(o.absent != null ? o.absent : 0) + '</span><span class="sublabel">missed</span></div>'
+        + '<div class="stat"><span class="label">leave</span><span class="value" style="color:var(--text-dim)">' + esc(o.leave != null ? o.leave : 0) + '</span><span class="sublabel">approved</span></div>'
+        + '<div class="stat"><span class="label">remaining</span><span class="value" style="color:var(--text)">' + esc(o.remaining != null ? o.remaining : '--') + '</span><span class="sublabel">' + (o.scheduled ? o.scheduled + ' in sem' : 'classes left') + '</span></div>'
+        + '</div>'
+        + '</div>';
+    }
+
     res.innerHTML = semBarHtml
       + '<div class="table-wrap">'
       + '<table>'
@@ -1786,6 +1900,7 @@ footer.fixed-footer {
       + '<tbody>' + rows + '</tbody>'
       + '</table>'
       + '</div>'
+      + summaryHtml
       + '<div class="res-footer">'
       + '<span>Checked at ' + esc(fetchedLocal) + '</span>'
       + '<span class="res-footer-actions">'
