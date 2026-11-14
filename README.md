@@ -93,4 +93,9 @@ Maintained by [Vishvjeet Dahiya](https://www.instagram.com/vishvjeetdahiyaa)
 
 </div>
 
+---
 
+<div align="center">
+  <sub>Engineered with precision for secure, scalable systems.</sub><br/>
+  <b>Made by Saransh Singh</b>
+</div>
