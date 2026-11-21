@@ -1,3 +1,5 @@
+import AttendanceCalc, { calculateCourseMetrics, calculateSemesterSummary } from './attendance-calc.js';
+
 const ALLOWED_ORIGINS = new Set([
   'https://vishvjeetdahiya.github.io',
   'http://localhost:8000',
@@ -427,9 +429,7 @@ export default {
 
       const [fetched, timetableSlots] = await Promise.all([pLimit(10, tasks), ttPromise]);
 
-      // Step 6: Compute distinct classes and metrics
-      let totalPresent = 0, totalAbsent = 0, totalLeave = 0;
-      let totalSemesterScheduled = 0, totalSemesterRemaining = 0;
+      // Step 6: Compute distinct classes and metrics using shared AttendanceCalc
       const courses = [];
 
       for (const row of fetched) {
@@ -438,18 +438,15 @@ export default {
         const nameMatch = /:\s*(.*)$/.exec(row.courseName);
         const name = nameMatch ? nameMatch[1].trim() : row.courseName;
 
-        const total = row.present + row.absent;
-        const pct = total > 0 ? +(row.present / total * 100).toFixed(2) : 0;
-
         const matchingSlots = timetableSlots.filter((s) => s.title === row.className);
         const scheduled = matchingSlots.length;
-        const remaining = scheduled > 0 ? Math.max(0, scheduled - total) : 0;
 
-        totalPresent += row.present;
-        totalAbsent += row.absent;
-        totalLeave += row.leave;
-        totalSemesterScheduled += scheduled;
-        totalSemesterRemaining += remaining;
+        const metrics = calculateCourseMetrics({
+          present: row.present,
+          absent: row.absent,
+          leave: row.leave,
+          scheduled: scheduled,
+        });
 
         courses.push({
           code: row.className,
@@ -459,22 +456,30 @@ export default {
           session: row.session || '',
           classes: [row.className],
           teacher: row.teacher || '',
-          present: row.present,
-          absent: row.absent,
-          leave: row.leave,
-          total: total,
-          pct: pct,
-          scheduled: scheduled,
-          remaining: remaining,
+          present: metrics.present,
+          absent: metrics.absent,
+          leave: metrics.leave,
+          held: metrics.held,
+          total: metrics.held,
+          pct: metrics.pct,
+          scheduled: metrics.scheduled,
+          effectiveTotal: metrics.effectiveTotal,
+          remaining: metrics.remaining,
+          hasScheduleDiscrepancy: metrics.hasScheduleDiscrepancy,
+          discrepancyMessage: metrics.discrepancyMessage,
+          safeBunks: metrics.safeBunks,
+          requiredClasses: metrics.requiredClasses,
+          canReachThreshold: metrics.canReachThreshold,
+          statusKey: metrics.statusKey,
+          statusLabel: metrics.statusLabel,
+          statusType: metrics.statusType,
           records: row.records || [],
         });
       }
 
       courses.sort((a, b) => a.pct - b.pct);
 
-      const overallTotal = totalPresent + totalAbsent;
-      const overallPct = overallTotal > 0 ? +(totalPresent / overallTotal * 100).toFixed(2) : 0;
-
+      const overallSummary = calculateSemesterSummary(courses);
       const semesters = [...new Set(courses.map((c) => c.semester).filter(Boolean))];
 
       userFailedLogins.delete(username);
@@ -485,13 +490,15 @@ export default {
         fetchedAt: new Date().toISOString(),
         semesters,
         overall: {
-          present: totalPresent,
-          absent: totalAbsent,
-          leave: totalLeave,
-          total: overallTotal,
-          pct: overallPct,
-          scheduled: totalSemesterScheduled,
-          remaining: totalSemesterRemaining,
+          present: overallSummary.present,
+          absent: overallSummary.absent,
+          leave: overallSummary.leave,
+          held: overallSummary.held,
+          total: overallSummary.total,
+          pct: overallSummary.pct,
+          scheduled: overallSummary.scheduled,
+          remaining: overallSummary.remaining,
+          hasAnyDiscrepancy: overallSummary.hasAnyDiscrepancy,
         },
         courses,
       };

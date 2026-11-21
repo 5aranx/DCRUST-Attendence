@@ -10,6 +10,7 @@
 <meta name="description" content="Check your DCRUSTM attendance from dcrustm.samarth.edu.in. Enter your roll number and password to view class-wise attendance.">
 <meta name="theme-color" content="#000000" id="meta-theme-color">
 <script src="./config.js"></script>
+<script src="./attendance-calc.js"></script>
 <script>
 (function() {
   var t = localStorage.getItem('dcrustm_theme');
@@ -779,6 +780,26 @@ tr:last-child td {
   color: var(--text-dim);
   white-space: nowrap;
   font-family: var(--mono);
+}
+.discrepancy-badge {
+  display: inline-block;
+  color: var(--warn);
+  font-size: 11px;
+  cursor: help;
+  margin-left: 2px;
+  vertical-align: middle;
+}
+.details-stat.stat-warn {
+  color: var(--warn);
+}
+.summary-discrepancy-note {
+  font-size: 11px;
+  color: var(--warn);
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: rgba(243, 156, 18, 0.08);
+  border: 1px solid rgba(243, 156, 18, 0.2);
+  border-radius: 4px;
 }
 .course-row {
   cursor: pointer;
@@ -1704,7 +1725,10 @@ footer.fixed-footer {
       ? currentData.courses
       : currentData.courses.filter(function (c) { return c.semester === currentSem; });
 
-    var o = (currentSem === 'all' && currentData.overall) ? currentData.overall : null;
+    var o = (typeof AttendanceCalc !== 'undefined')
+      ? AttendanceCalc.calculateSemesterSummary(activeCourses)
+      : null;
+
     if (!o) {
       var p = 0, a = 0, l = 0, sched = 0, rem = 0;
       for (var i = 0; i < activeCourses.length; i++) {
@@ -1715,16 +1739,18 @@ footer.fixed-footer {
         sched += (typeof ac.scheduled === 'number' ? ac.scheduled : 0);
         rem += (typeof ac.remaining === 'number' ? ac.remaining : 0);
       }
-      var tot = p + a;
+      var tot = p + a + l;
       var pct = tot > 0 ? +((p / tot) * 100).toFixed(2) : 0;
       o = {
         present: p,
         absent: a,
         leave: l,
+        held: tot,
         total: tot,
         pct: pct,
-        scheduled: sched,
+        scheduled: Math.max(sched, tot + rem),
         remaining: rem,
+        hasAnyDiscrepancy: tot > sched,
       };
     }
 
@@ -1735,41 +1761,25 @@ footer.fixed-footer {
     var rows = '';
     for (var i = 0; i < activeCourses.length; i++) {
       var c = activeCourses[i];
-      var rem = typeof c.remaining === 'number' ? c.remaining : 0;
-      var sched = typeof c.scheduled === 'number' ? c.scheduled : 0;
-      var statusHtml;
-      var projMsg = '';
+      var m = (typeof AttendanceCalc !== 'undefined')
+        ? AttendanceCalc.calculateCourseMetrics(c)
+        : null;
 
-      if (c.total === 0) {
-        statusHtml = '<span class="status-pill pill-none">not marked yet</span>';
-        projMsg = sched > 0
-          ? 'No classes held yet (<strong>' + sched + '</strong> scheduled).'
-          : 'No classes held yet.';
-      } else if (c.pct >= 75) {
-        var rawSafeNow = Math.floor((c.present - 0.75 * c.total) / 0.75);
-        var safeNow = sched > 0 ? Math.min(rem, Math.max(0, rawSafeNow)) : Math.max(0, rawSafeNow);
+      var held = m ? m.held : ((c.present || 0) + (c.absent || 0) + (c.leave || 0));
+      var pctVal = m ? m.pct : (c.pct || 0);
+      var remVal = m ? m.remaining : (typeof c.remaining === 'number' ? c.remaining : 0);
+      var totalSched = m ? m.effectiveTotal : (typeof c.scheduled === 'number' ? c.scheduled : 0);
+      var statusHtml = m
+        ? ('<span class="status-pill pill-' + m.statusType + '">' + esc(m.statusLabel) + '</span>')
+        : '<span class="status-pill pill-none">not marked yet</span>';
+      var projMsg = m ? m.projMsg : '';
 
-        if (sched > 0 && rem === 0) {
-          statusHtml = '<span class="status-pill pill-ok">completed</span>';
-          projMsg = 'Completed at <strong>' + c.pct.toFixed(2) + '%</strong>.';
-        } else if (safeNow > 0) {
-          statusHtml = '<span class="status-pill pill-ok">safe bunks ' + safeNow + '</span>';
-          projMsg = 'Current safe bunks: <strong>' + safeNow + '</strong> (attendance stays &ge; 75%).';
-        } else {
-          statusHtml = '<span class="status-pill pill-warn">on edge 0 bunks</span>';
-          projMsg = 'On the edge (<strong>0</strong> safe bunks). Missing next class drops below 75%.';
-        }
-      } else {
-        // Below 75%
-        var rawNeed = Math.max(0, Math.ceil(3 * c.absent - c.present));
-        if (sched > 0 && rem === 0) {
-          statusHtml = '<span class="status-pill pill-bad">short attendance</span>';
-          projMsg = 'Completed at <strong>' + c.pct.toFixed(2) + '%</strong> (short of 75%).';
-        } else {
-          statusHtml = '<span class="status-pill pill-bad">attend ' + rawNeed + ' classes</span>';
-          projMsg = 'Attend next <strong>' + rawNeed + '</strong> class' + (rawNeed === 1 ? '' : 'es') + ' to reach 75%.';
-        }
-      }
+      var warnIcon = (m && m.hasScheduleDiscrepancy)
+        ? ' <span class="discrepancy-badge" title="' + esc(m.discrepancyMessage) + '" aria-label="' + esc(m.discrepancyMessage) + '">&#9888;</span>'
+        : '';
+      var remCellContent = (totalSched > 0)
+        ? ('<span class="rem-val">' + esc(remVal) + '</span><span class="rem-sub">of ' + esc(totalSched) + '</span>' + warnIcon)
+        : '<span class="status-none">--</span>';
 
       var records = c.records || [];
       var recContent = '';
@@ -1803,15 +1813,23 @@ footer.fixed-footer {
       }
 
       var palStat = '<span class="details-stat">'
-        + (c.total === 0 ? 'P / A / L: --' : ('P: ' + esc(c.present) + ' &bull; A: ' + esc(c.absent) + ' &bull; L: ' + esc(c.leave)))
+        + (held === 0 ? 'P / A / L: --' : ('P: ' + esc(c.present || 0) + ' &bull; A: ' + esc(c.absent || 0) + ' &bull; L: ' + esc(c.leave || 0)))
         + '</span>';
+
+      var schedLeftMsg = (m && m.scheduled > 0)
+        ? '<span class="details-stat">' + remVal + ' of ' + totalSched + ' classes left</span>'
+        : (c.scheduled > 0 ? '<span class="details-stat">' + remVal + ' of ' + c.scheduled + ' classes left</span>' : '');
+      var discMsg = (m && m.hasScheduleDiscrepancy)
+        ? '<span class="details-stat stat-warn" title="' + esc(m.discrepancyMessage) + '">&#9888; Held (' + m.held + ') exceeds timetable (' + m.scheduled + ')</span>'
+        : '';
 
       var detailsHtml = '<div class="details-wrap">'
         + '<div class="details-header">'
         + '<div class="details-title-row">'
         + '<span class="details-teacher">Teacher: ' + esc(c.teacher || '--') + '</span>'
         + palStat
-        + (sched > 0 ? '<span class="details-stat">' + rem + ' of ' + sched + ' classes left</span>' : '')
+        + schedLeftMsg
+        + discMsg
         + '</div>'
         + filterPills
         + '</div>'
@@ -1833,9 +1851,9 @@ footer.fixed-footer {
         + '</div>'
         + '<div class="course-teacher">' + esc(c.teacher || '--') + '</div>'
         + '</td>'
-        + '<td class="pct-cell" style="color:' + (c.total === 0 ? 'var(--text-faint)' : pctColor(c.pct)) + '">' + (c.total === 0 ? '--' : esc(c.pct.toFixed(2)) + '%') + '</td>'
-        + '<td class="pal-cell"><span class="cell-label">P / A / L</span><span class="cell-val">' + (c.total === 0 ? '--' : (c.present > 0 ? esc(c.present) : '--') + ' / ' + (c.absent > 0 ? esc(c.absent) : '--') + ' / ' + (c.leave > 0 ? esc(c.leave) : '--')) + '</span></td>'
-        + '<td class="rem-cell"><span class="cell-label">Remaining</span><span class="cell-val">' + (sched > 0 ? ('<span class="rem-val">' + esc(rem) + '</span><span class="rem-sub">of ' + esc(sched) + '</span>') : '<span class="status-none">--</span>') + '</span></td>'
+        + '<td class="pct-cell" style="color:' + (held === 0 ? 'var(--text-faint)' : pctColor(pctVal)) + '">' + (held === 0 ? '--' : esc(pctVal.toFixed(2)) + '%') + '</td>'
+        + '<td class="pal-cell"><span class="cell-label">P / A / L</span><span class="cell-val">' + (held === 0 ? '--' : (c.present > 0 ? esc(c.present) : '--') + ' / ' + (c.absent > 0 ? esc(c.absent) : '--') + ' / ' + (c.leave > 0 ? esc(c.leave) : '--')) + '</span></td>'
+        + '<td class="rem-cell"><span class="cell-label">Remaining</span><span class="cell-val">' + remCellContent + '</span></td>'
         + '<td class="status-cell">' + statusHtml + '</td>'
         + '</tr>'
         + '<tr class="details-row" id="details-' + i + '" hidden>'
@@ -1881,15 +1899,19 @@ footer.fixed-footer {
     var summaryHtml = '';
     if (activeCourses.length > 0 && o) {
       var oPct = (typeof o.pct === 'number' && !isNaN(o.pct)) ? o.pct : 0;
+      var discNote = o.hasAnyDiscrepancy
+        ? '<div class="summary-discrepancy-note">&#9888; Note: Timetable schedule was exceeded by conducted classes in some courses; totals have been reconciled.</div>'
+        : '';
       summaryHtml = '<div class="summary-section">'
         + '<div class="summary-title">' + esc(semTitle) + '</div>'
         + '<div class="summary">'
-        + '<div class="stat"><span class="label">overall</span><span class="value" style="color:' + pctColor(oPct) + '">' + esc(oPct.toFixed(2)) + '%</span><span class="sublabel">' + (o.total || 0) + ' held</span></div>'
+        + '<div class="stat"><span class="label">overall</span><span class="value" style="color:' + pctColor(oPct) + '">' + esc(oPct.toFixed(2)) + '%</span><span class="sublabel">' + (o.held != null ? o.held : (o.total || 0)) + ' held</span></div>'
         + '<div class="stat"><span class="label">present</span><span class="value" style="color:var(--ok)">' + esc(o.present != null ? o.present : 0) + '</span><span class="sublabel">attended</span></div>'
         + '<div class="stat"><span class="label">absent</span><span class="value" style="color:var(--bad)">' + esc(o.absent != null ? o.absent : 0) + '</span><span class="sublabel">missed</span></div>'
         + '<div class="stat"><span class="label">leave</span><span class="value" style="color:var(--text-dim)">' + esc(o.leave != null ? o.leave : 0) + '</span><span class="sublabel">approved</span></div>'
         + '<div class="stat"><span class="label">remaining</span><span class="value" style="color:var(--text)">' + esc(o.remaining != null ? o.remaining : '--') + '</span><span class="sublabel">' + (o.scheduled ? o.scheduled + ' in sem' : 'classes left') + '</span></div>'
         + '</div>'
+        + discNote
         + '</div>';
     }
 

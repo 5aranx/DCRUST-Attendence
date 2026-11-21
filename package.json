@@ -1,0 +1,16 @@
+{
+  "name": "dcrust-attendance",
+  "version": "1.1.0",
+  "description": "DCRUST attendance tracker with bunk projections, leave handling, and timetable reconciliation",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "lint": "node --check attendance-calc.js test/attendance.test.js && node --check --input-type=module < worker.js"
+  },
+  "keywords": [
+    "attendance",
+    "dcrust",
+    "calculator"
+  ],
+  "author": "Vishvjeet Dahiya",
+  "license": "MIT"
+}
